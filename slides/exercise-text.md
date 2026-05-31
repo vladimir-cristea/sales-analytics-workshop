@@ -184,9 +184,18 @@ Create one bronze table per entity (`bronze_customers`, `bronze_products`,
 `bronze_orders`) that simply reads the raw JSON from the volume. **Do not clean anything
 yet.** Bronze is the faithful, unaltered copy of what landed.
 
-💡 Ask Genie Code for an "Auto Loader streaming table" reading the volume path. If you get
-stuck on schema inference, ask it to infer the schema or add schema hints. A nice touch is
-to stamp each row with where and when it landed (`_ingested_at`, `_source_file`).
+💡 Ask Genie Code for an "Auto Loader streaming table" reading the volume path. A nice
+touch is to stamp each row with where and when it landed (`_ingested_at`, `_source_file`).
+
+⚠️ Three things that trip people up in a pipeline (let Genie Code hit them, then fix):
+- A streaming table needs `FROM STREAM read_files(...)`. Plain `FROM read_files(...)` is a
+  batch query and errors with *"Cannot create streaming table from batch query"*. The
+  `STREAM` keyword is what makes it Auto Loader.
+- Use `CREATE OR REFRESH STREAMING TABLE | MATERIALIZED VIEW`, not `CREATE OR REPLACE`
+  (that is plain SQL and will not run in a pipeline).
+- On dirty JSON, pin the column types with `schemaHints` (for example
+  `'order_id INT, customer_id INT, quantity INT, order_date DATE, unit_price DECIMAL(10,2),
+  discount_pct DECIMAL(5,2)'`). Without them, one garbage value can flip an inferred type.
 
 You should land roughly **81 customers, 37 products, 2,261 orders** in bronze - more than
 the clean counts, because the dirt is still in.
@@ -215,9 +224,10 @@ yet). Enforce these data-quality rules - drop or quarantine anything that fails:
 - Drop future orders (`order_date` after today).
 - **De-duplicate** on `order_id` (the raw data has exact duplicate order lines).
 
-💡 Ask Genie Code to express these as pipeline **expectations**
-(`CONSTRAINT ... EXPECT (...) ON VIOLATION DROP ROW`). That way the rules are declarative
-and the pipeline reports how many rows each rule dropped.
+💡 Ask Genie Code to express these as pipeline **expectations**. The syntax is
+`CONSTRAINT <name> EXPECT (<predicate>) ON VIOLATION DROP ROW`, declared in parentheses
+right after the table name, before `AS SELECT`. That way the rules are declarative and the
+pipeline reports how many rows each rule dropped.
 
 💡 The customers and products rules are pure row filters, so those silver tables can stay
 **streaming tables**. De-duplicating orders is different: picking one row per `order_id`
@@ -251,16 +261,18 @@ tables are usually best as **materialized views**. Build:
 Line revenue = `quantity * unit_price * (1 - discount_pct/100)`.
 Line profit  = revenue - `quantity * cost`.
 
-✅ **Did it work?** A few numbers to check against: **34** products in
-`gold_product_performance`, **7** account managers in `gold_rep_performance`, and **9**
-at-risk customers. Your total product revenue should come to about **£871,821** across
-2,200 order lines - matching what Genie gives you from the clean tables in Practical 1.
+✅ **Did it work?** Numbers to check against: **34** products in `gold_product_performance`,
+**7** account managers in `gold_rep_performance`, and **9** at-risk customers. Total product
+revenue should be **£871,821.82** across 2,200 order lines - matching the clean tables from
+Practical 1. Your top product by revenue should be **Prosecco 750ml x6 (£60,693.48)** and
+your top account manager **Aisha Bello (£66,573.98)**.
 
-💡 **Spot the subtlety.** Your per-product gold totals match the clean reference exactly,
-but your per-*customer* totals will be slightly lower. Why? Silver dropped 6 customers with
-corrupted region values, and dropping those dimension rows orphaned their (perfectly good)
-order lines from the customer join. That is the classic trade-off between *dropping* a bad
-row and *quarantining or repairing* it - worth a thought for real pipelines.
+💡 **Spot the subtlety.** Your per-product gold revenue matches the clean reference exactly
+(£871,821.82), but your per-*customer* gold revenue comes out lower (**£793,959.93**). Why?
+Silver dropped 6 customers with corrupted region values, and dropping those dimension rows
+orphaned their (perfectly good) **£77,861** of order lines from the customer join. That is
+the classic trade-off between *dropping* a bad row and *quarantining or repairing* it -
+well worth a thought for real pipelines.
 
 ### Bonus (if you finish early)
 

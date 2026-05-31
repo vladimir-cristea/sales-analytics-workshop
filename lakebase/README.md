@@ -120,14 +120,23 @@ hard-code it). Tested: **70 rows loaded, 36 columns**.
 source lakebase/scripts/01_connect.sh production
 psql "$PGURI" -f lakebase/sql/point_lookups.sql
 ```
-- **Point lookup by PK** (customer 42) returns one row.
-- `EXPLAIN ANALYZE` (with `enable_seqscan=off`) shows
-  `Index Scan using customer_scorecard_pkey … Execution Time: 0.02 ms`.
-  *(At 70 rows the planner picks a seq scan by default — the whole table is one
-  page — still sub-millisecond; the PK index is what keeps it O(log n) at scale.)*
-- The partial index on `at_risk_flag` serves an instant churn worklist.
+- **Point lookup by PK** (customer 42) returns one row, sub-millisecond.
+- **`EXPLAIN` at this data size shows a `Seq Scan`, not an `Index Scan` — and that's
+  expected.** At 70 rows the whole table is a single page, so the planner correctly
+  prefers a seq scan (`Seq Scan on partition_N …`, ~0.2 ms — the synced table is
+  range-partitioned on the PK). The PK index exists and is what keeps lookups
+  O(log n) *at scale*; to see the index plan explicitly, force it:
+  `SET enable_seqscan = off;` → `Index Scan using …_pkey on partition_N … ~0.2 ms`.
+  Don't promise attendees an "Index Scan ~0.02 ms" by default — the honest line is
+  "sub-millisecond serving; the index proves itself at scale."
+- The loader table (`public.customer_scorecard`) is unpartitioned with a partial
+  index on `at_risk_flag` for an instant churn worklist.
 
 ### 4. Branching  (`scripts/03_branch_demo.sh`)
+> **Gotcha:** a branch is a copy-on-write snapshot of the parent *at branch time*.
+> Create any pre-baked demo branch **after** the synced table reaches ONLINE —
+> a branch taken before the sync finished won't contain the table.
+
 Branch `dev-experiment` off production (copy-on-write — instant, 0 bytes). Tested:
 the branch starts with all **70 rows**; after a `DELETE`/`UPDATE`/`INSERT` it has
 **14 rows** with customer 42 renamed and a new customer 999 — while **production

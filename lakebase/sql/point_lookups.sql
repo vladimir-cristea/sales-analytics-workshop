@@ -6,6 +6,14 @@
 -- NEVER run live against the transactional source. We precompute it in the
 -- lakehouse and serve it here as a plain Postgres table keyed by customer_id —
 -- single-digit-millisecond point lookups. "Look, it's real Postgres."
+--
+-- This file targets the loader table `public.customer_scorecard` (unpartitioned),
+-- where forcing the index gives a clean `Index Scan using customer_scorecard_pkey`.
+-- Participants instead query the SYNCED table `shared_data.customer_scorecard_synced`
+-- (same columns) — it's range-partitioned on the PK, so EXPLAIN reads
+-- `Seq Scan on partition_N` by default at this row count (~0.2 ms; force the index
+-- with `SET enable_seqscan=off` → `Index Scan … on partition_N`). Either way the
+-- point lookup is sub-millisecond; the index proves itself at scale.
 -- ---------------------------------------------------------------------------
 
 -- 1) The headline OLTP pattern: point lookup by primary key.

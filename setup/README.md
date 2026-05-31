@@ -7,7 +7,7 @@ idempotent and safe to re-run. Runs on **serverless**.
 
 | § | Step | Notes |
 |---|------|-------|
-| 1 | Configuration | Widgets for `catalog`, `schema`, `volume`, `participants_group`, `participant_users`, `create_catalog`, `data_dir`. Defaults to the example catalog `vcr_serverless_catalog`; change it to your own. |
+| 1 | Configuration | Widgets for `catalog`, `schema`, `volume`, `participants_group`, `participant_users`, `create_catalog`, `data_dir`. Defaults to the example catalog `workshop`; change it to your own. |
 | 2 | _(optional)_ create catalog | Skipped by default; set `create_catalog=true` to create a fresh catalog on your workspace. |
 | 3 | Create schema + volume | `shared_data` schema + `data` volume. |
 | 4 | **Copy committed JSON → volume** | Reads the repo's `data/raw` + `data/clean` and copies into the volume - **no manual upload**. See the gotcha note below. |

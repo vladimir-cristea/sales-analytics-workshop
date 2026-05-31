@@ -20,7 +20,7 @@
 set -euo pipefail
 
 PROJECT="${PROJECT:-workshop-scorecard}"
-CATALOG="${CATALOG:-vcr_serverless_catalog}"           # adjust for your workspace
+CATALOG="${CATALOG:-workshop}"           # adjust for your workspace
 GROUP="${GROUP:-workshop_participants}"
 SOURCE_SCHEMA="${SOURCE_SCHEMA:-${CATALOG}.shared_data}"          # shared fallback source
 SOURCE_TABLE="${SOURCE_TABLE:-${CATALOG}.shared_data.gold_customer_scorecard}"

@@ -31,10 +31,10 @@ set -euo pipefail
 PROJECT="${PROJECT:-workshop-scorecard}"
 # A NORMAL UC catalog/schema you can CREATE TABLE in (NOT a Lakebase catalog).
 # In the per-participant design, point these at the participant's OWN schema.
-UC_CATALOG="${UC_CATALOG:-vcr_serverless_catalog}"     # adjust for your workspace
+UC_CATALOG="${UC_CATALOG:-workshop}"     # adjust for your workspace
 UC_SCHEMA="${UC_SCHEMA:-shared_data}"
 SYNCED_TABLE="${SYNCED_TABLE:-customer_scorecard_synced}"
-SOURCE="${SOURCE:-vcr_serverless_catalog.shared_data.gold_customer_scorecard}"
+SOURCE="${SOURCE:-workshop.shared_data.gold_customer_scorecard}"
 
 echo "Creating synced table ${UC_CATALOG}.${UC_SCHEMA}.${SYNCED_TABLE} (SNAPSHOT)…"
 databricks postgres create-synced-table "${UC_CATALOG}.${UC_SCHEMA}.${SYNCED_TABLE}" --json "{

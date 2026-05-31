@@ -15,15 +15,15 @@
 #
 # Run on Databricks (serverless or a cluster). psycopg2 ships in the runtime.
 # Pass the connection token in via the env var below (do NOT hard-code it):
-#   LAKEBASE_HOST  = ep-...database.us-east-1.cloud.databricks.com
-#   LAKEBASE_USER  = your-email@company.com
+#   LAKEBASE_HOST  = ep-<your-endpoint>.database.<region>.cloud.databricks.com
+#   LAKEBASE_USER  = your-email@your-company.com
 #   LAKEBASE_TOKEN = output of `databricks postgres generate-database-credential`
 # ---------------------------------------------------------------------------
 import os
 import psycopg2
 from psycopg2.extras import execute_values
 
-SOURCE = "vcr_serverless_catalog.shared_data.gold_customer_scorecard"  # adjust catalog for your workspace
+SOURCE = "workshop.shared_data.gold_customer_scorecard"  # adjust catalog for your workspace
 HOST   = os.environ["LAKEBASE_HOST"]
 USER   = os.environ["LAKEBASE_USER"]
 TOKEN  = os.environ["LAKEBASE_TOKEN"]

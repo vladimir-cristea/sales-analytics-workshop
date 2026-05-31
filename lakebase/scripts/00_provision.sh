@@ -29,4 +29,4 @@ print("project:", d["name"]); \
 # Example output:
 #   project: projects/workshop-scorecard
 #   branch:  projects/workshop-scorecard/branches/production
-#            endpoint primary -> ep-spring-waterfall-XXXX.database.us-east-1.cloud.databricks.com
+#            endpoint primary -> ep-<your-endpoint>.database.<region>.cloud.databricks.com

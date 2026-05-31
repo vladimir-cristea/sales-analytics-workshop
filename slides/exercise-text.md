@@ -7,13 +7,13 @@ outlets (pubs, cafes, delis, convenience stores) across the UK.
 
 **Shared facts you can rely on**
 
-- Catalog `vcr_serverless_catalog`, schema `shared_data` (the catalog name may differ on
+- Catalog `workshop`, schema `shared_data` (the catalog name may differ on
   your workspace - the facilitator will tell you).
 - Clean curated tables: `customers`, `products`, `orders`, plus pre-aggregated
   `product_performance_summary` and `monthly_sales_summary`.
 - Governed metric view: `sales_metrics`.
 - Raw, deliberately messy JSON lives in a volume at
-  `/Volumes/vcr_serverless_catalog/shared_data/data/raw/`.
+  `/Volumes/workshop/shared_data/data/raw/`.
 - Your personal scratch schema is `ws_<your-name>` (created for you by the setup).
 - Segments: National Group, Regional, Independent. Categories: Beverages, Ambient,
   Chilled, Frozen, Alcohol. Everything is in GBP. "Today" for this dataset is
@@ -117,9 +117,9 @@ blanks file: you get the brief and the rules, and *you* decide how to prompt you
 The raw, deliberately dirty JSON is in a volume:
 
 ```
-/Volumes/vcr_serverless_catalog/shared_data/data/raw/customers/
-/Volumes/vcr_serverless_catalog/shared_data/data/raw/products/
-/Volumes/vcr_serverless_catalog/shared_data/data/raw/orders/
+/Volumes/workshop/shared_data/data/raw/customers/
+/Volumes/workshop/shared_data/data/raw/products/
+/Volumes/workshop/shared_data/data/raw/orders/
 ```
 
 Build your pipeline **into your own schema** (`ws_<your-name>`) so you do not clash with

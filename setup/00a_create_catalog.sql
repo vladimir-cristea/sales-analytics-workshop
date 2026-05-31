@@ -2,7 +2,7 @@
 -- MAGIC %md
 -- MAGIC # (Optional) Create catalog
 -- MAGIC
--- MAGIC By default this reuses the existing `vcr_serverless_catalog`, so this step is
+-- MAGIC By default this reuses the existing `workshop`, so this step is
 -- MAGIC **not** run by default. To create a fresh catalog on your workspace, run this once,
 -- MAGIC then point the bootstrap's `catalog` widget at it.
 -- MAGIC

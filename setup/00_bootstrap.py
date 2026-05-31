@@ -23,12 +23,12 @@
 # MAGIC %md
 # MAGIC ## 1. Configuration
 # MAGIC
-# MAGIC Defaults to the example catalog (`vcr_serverless_catalog`). For your own workspace,
+# MAGIC Defaults to the example catalog (`workshop`). For your own workspace,
 # MAGIC change `catalog` here (and optionally enable catalog creation below).
 
 # COMMAND ----------
 
-dbutils.widgets.text("catalog", "vcr_serverless_catalog", "Catalog")
+dbutils.widgets.text("catalog", "workshop", "Catalog")
 dbutils.widgets.text("schema", "shared_data", "Schema")
 dbutils.widgets.text("volume", "data", "Volume")
 dbutils.widgets.text("participants_group", "workshop_participants", "Participant group")
@@ -59,7 +59,7 @@ print(f"Create catalog? ...... {CREATE_CATALOG}")
 # MAGIC %md
 # MAGIC ## 2. (Optional) Create the catalog
 # MAGIC
-# MAGIC By default this reuses the existing `vcr_serverless_catalog`, so it is
+# MAGIC By default this reuses the existing `workshop`, so it is
 # MAGIC skipped (`create_catalog = false`). To create a fresh catalog on your workspace, set the
 # MAGIC `create_catalog` widget to `true`. A managed catalog needs no storage location on most
 # MAGIC workspaces; if yours requires one, add `MANAGED LOCATION '<s3/abfss path>'`.

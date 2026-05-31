@@ -10,20 +10,20 @@
 
 -- COMMAND ----------
 
-CREATE OR REPLACE VIEW vcr_serverless_catalog.shared_data.sales_metrics
+CREATE OR REPLACE VIEW workshop.shared_data.sales_metrics
 WITH METRICS
 LANGUAGE YAML
 COMMENT 'Governed sales KPIs for Northgate Provisions Co. (orders fact joined to customers + products).'
 AS $$
 version: "1.1"
-source: vcr_serverless_catalog.shared_data.orders
+source: workshop.shared_data.orders
 comment: "Governed sales KPIs over clean order lines."
 joins:
   - name: customers
-    source: vcr_serverless_catalog.shared_data.customers
+    source: workshop.shared_data.customers
     on: source.customer_id = customers.customer_id
   - name: products
-    source: vcr_serverless_catalog.shared_data.products
+    source: workshop.shared_data.products
     on: source.product_id = products.product_id
 dimensions:
   - name: Region
@@ -65,10 +65,10 @@ SELECT `Segment`,
        ROUND(MEASURE(`Total Profit`), 2)    AS profit,
        ROUND(MEASURE(`Profit Margin %`), 2) AS margin_pct,
        MEASURE(`Order Count`)               AS orders
-FROM vcr_serverless_catalog.shared_data.sales_metrics
+FROM workshop.shared_data.sales_metrics
 GROUP BY `Segment` ORDER BY revenue DESC;
 
 -- COMMAND ----------
 
 -- Grant SELECT to the participant group (SELECT on the schema already covers it).
-GRANT SELECT ON VIEW vcr_serverless_catalog.shared_data.sales_metrics TO `workshop_participants`;
+GRANT SELECT ON VIEW workshop.shared_data.sales_metrics TO `workshop_participants`;

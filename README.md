@@ -45,7 +45,7 @@ documented catalog-creation cell for your own workspace.
   emails (*Settings → Identity and Access → Groups*). **This is the only manual setup
   step** - create it before running the bootstrap (see step 1 above).
 - Permission to create a catalog (or an existing catalog you can build into). The scripts
-  default to the example catalog `vcr_serverless_catalog`; change it to your own. The
+  default to the example catalog `workshop`; change it to your own. The
   bootstrap has a documented cell for creating a fresh catalog if you need one.
 
 **What each participant needs:** a Databricks account that is a member of the
@@ -104,5 +104,5 @@ Full schema and the precise list of seeded data-quality issues live in
 
 ```sql
 -- Drops everything the workshop created. (Adjust the catalog name for your environment.)
-DROP SCHEMA IF EXISTS vcr_serverless_catalog.shared_data CASCADE;
+DROP SCHEMA IF EXISTS workshop.shared_data CASCADE;
 ```

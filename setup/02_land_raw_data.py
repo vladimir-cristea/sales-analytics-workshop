@@ -16,7 +16,7 @@
 
 import os, io
 
-CATALOG, SCHEMA, VOLUME = "vcr_serverless_catalog", "shared_data", "data"
+CATALOG, SCHEMA, VOLUME = "workshop", "shared_data", "data"
 VOLUME_ROOT = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}"
 
 # Repo data dir - derived from this notebook's path (repo_root/data).

@@ -10,17 +10,17 @@
 
 -- COMMAND ----------
 
-CREATE OR REPLACE TABLE vcr_serverless_catalog.shared_data.gold_customer_scorecard
+CREATE OR REPLACE TABLE workshop.shared_data.gold_customer_scorecard
 COMMENT 'Heavy-OLAP per-customer analytics scorecard, keyed by customer_id for point lookup (Lakebase source).' AS
 WITH params AS (
-  SELECT MAX(order_date) AS as_of_date FROM vcr_serverless_catalog.shared_data.orders
+  SELECT MAX(order_date) AS as_of_date FROM workshop.shared_data.orders
 ),
 line_facts AS (
   SELECT o.order_id, o.customer_id, o.product_id, o.order_date, o.quantity, p.category,
          o.quantity * o.unit_price * (1 - o.discount_pct/100)                       AS revenue,
          o.quantity * o.unit_price * (1 - o.discount_pct/100) - o.quantity * p.cost  AS profit
-  FROM vcr_serverless_catalog.shared_data.orders o
-  JOIN vcr_serverless_catalog.shared_data.products p ON o.product_id = p.product_id
+  FROM workshop.shared_data.orders o
+  JOIN workshop.shared_data.products p ON o.product_id = p.product_id
 ),
 lifetime AS (
   SELECT customer_id,
@@ -50,15 +50,15 @@ top_cats AS (
 purchased_prod AS (SELECT DISTINCT customer_id, product_id FROM line_facts),
 seg_prod_pop AS (
   SELECT c.segment, lf.product_id, COUNT(DISTINCT lf.customer_id) AS cnt
-  FROM line_facts lf JOIN vcr_serverless_catalog.shared_data.customers c ON lf.customer_id = c.customer_id
+  FROM line_facts lf JOIN workshop.shared_data.customers c ON lf.customer_id = c.customer_id
   GROUP BY c.segment, lf.product_id
 ),
 cross_sell AS (
   SELECT customer_id, product_id AS cross_sell_product_id, product_name AS cross_sell_product_name FROM (
     SELECT cu.customer_id, pr.product_id, pr.product_name,
            ROW_NUMBER() OVER (PARTITION BY cu.customer_id ORDER BY COALESCE(sp.cnt,0) DESC, pr.product_id) AS rn
-    FROM vcr_serverless_catalog.shared_data.customers cu
-    CROSS JOIN vcr_serverless_catalog.shared_data.products pr
+    FROM workshop.shared_data.customers cu
+    CROSS JOIN workshop.shared_data.products pr
     LEFT JOIN purchased_prod pp ON pp.customer_id = cu.customer_id AND pp.product_id = pr.product_id
     LEFT JOIN seg_prod_pop sp ON sp.segment = cu.segment AND sp.product_id = pr.product_id
     WHERE pp.product_id IS NULL
@@ -78,7 +78,7 @@ base AS (
     COALESCE(r.r12_orders,0) AS frequency_12m, COALESCE(r.r12_revenue,0) AS monetary_12m,
     tc.top_category_1, tc.top_category_2,
     xs.cross_sell_product_id, xs.cross_sell_product_name
-  FROM vcr_serverless_catalog.shared_data.customers c
+  FROM workshop.shared_data.customers c
   LEFT JOIN lifetime l ON c.customer_id = l.customer_id
   LEFT JOIN r12 r ON c.customer_id = r.customer_id
   LEFT JOIN top_cats tc ON c.customer_id = tc.customer_id

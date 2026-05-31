@@ -162,12 +162,14 @@ already governed and would not visibly "break".)
 
 1. Open **"Northgate Provisions - Base Only (no context)"** and ask exactly:
    **"active customers (90d) by segment"**.
-2. Genie answers **Independent 69, Regional 32, National Group 20** - which is *impossible*,
-   because there are only 41 Independent, 17 Regional and 12 National Group customers in the
-   whole business. Open the SQL: this space has only the pre-aggregated summary tables, no
+2. Genie returns badly inflated counts - something like **Independent 69, Regional 32,
+   National Group 20**, though you may see even larger numbers (e.g. 131/61/38) on another
+   run. Either way it is *impossible*: every figure far exceeds the true segment totals of
+   **41 / 17 / 12**. Open the SQL: this space has only the pre-aggregated summary tables, no
    customer-level table, so Genie can only **sum monthly active-customer counts** - it has no
    way to count distinct customers, and double-counts anyone who ordered in more than one
-   month.
+   month (and how many months it sums varies from run to run, which is why the exact figure
+   wanders).
 
 **Step 2 - ask the with-metric space and get the truth.**
 

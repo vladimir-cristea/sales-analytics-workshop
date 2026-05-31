@@ -35,7 +35,7 @@ RANDOM_SEED = 42
 NUM_CUSTOMERS = 70
 NUM_ORDERS = 2200            # clean order lines; dirty file adds the seeded rows on top
 
-# "Today" for the workshop — anything dated after this is in the future.
+# Reference "today" for the dataset — anything dated after this is in the future.
 TODAY = date(2026, 5, 31)
 HISTORY_START = date(2025, 1, 1)   # orders span this range up to TODAY (clean data)
 
@@ -89,7 +89,7 @@ PRODUCT_CATALOGUE = [
     ("Chopped Tomatoes 2.5kg x6", "Ambient", 12.30),
     ("Extra Virgin Olive Oil 5L", "Ambient", 34.00),
     ("Plain Flour 16kg", "Ambient", 13.20),
-    ("Granulated Sugar 25kg", "Ambient", 22.50),
+    ("Cooking Salt 25kg", "Ambient", 22.50),
     ("Baked Beans 2.6kg x6", "Ambient", 15.40),
     ("Strawberry Jam 3kg", "Ambient", 11.10),
     # Chilled

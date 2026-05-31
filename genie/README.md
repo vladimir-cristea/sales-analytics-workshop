@@ -161,20 +161,26 @@ consumes it natively via `MEASURE()`. WITHOUT it, naive NL→SQL either **double
 
 ---
 
-## Entitlements & entry points
+## Entitlements & entry points (verified live in the UI)
 
-- **Genie spaces + Conversation API:** GA, fully working on this workspace (verified by every test above).
-- **Agent-style multi-step reasoning:** functionally working (the Scotland compound question).
-- **Named preview toggles** (Genie Agent mode, Genie Code): confirm in the workspace UI under
-  **Settings → Previews** — not exposed by any public API. Needs a signed-in browser / workspace admin.
+**Entitlements — both confirmed ENABLED:**
+- **Genie Agent mode:** ✅ ON. The Genie space's question box has an **Agent | Chat** toggle with
+  **Agent selected by default**, plus a **Deep Research** chat type (`ct=DEEP_RESEARCH`). The
+  multi-step Scotland question above runs in this mode.
+- **Genie Code:** ✅ ENABLED. A **Genie Code** button sits in the workspace top nav on every page →
+  opens *"Genie Code — Run multi-step data and AI tasks"* (agent input with `@` for objects, `/` for
+  commands; its own Agent selector). This is the assistant used for "Genie Code assistance" in Practical 2.
+- **Genie spaces + Conversation API:** GA, fully working (every test above ran clean).
 
-**Two entry points** (documented navigation; final label check pending UI sign-in):
+> There is no separate **Settings → Previews** tab visible to a workspace (non-account) admin here;
+> entitlement was confirmed directly from the live product surfaces, which is stronger than a toggle.
 
-| Surface | Who | How to reach it |
-|---------|-----|-----------------|
-| **Genie space (builder)** | Builders / analysts | Workspace left nav → **Genie** → open *Northgate Provisions — Sales Analytics*. Direct URL: `/genie/rooms/<space_id>` (this space: `01f15d2bcc96149bbe3494375ce128a2`). Full builder chrome: edit Instructions, SQL examples, Monitoring. |
-| **Genie in Databricks One** | Business users | Open **Databricks One** (the simplified business-user home) → **Genie** → the same space, shared with the participant group. No SQL/builder chrome — just ask-and-answer. |
+**Two entry points — both confirmed:**
 
-> Both surfaces query the *same* space and the *same* governed tables/metric view; only the
-> chrome differs. The space is confirmed working via the API; the visual two-surface walk-through
-> still needs a signed-in browser.
+| Surface | Who | Exact navigation |
+|---------|-----|------------------|
+| **Genie space (builder)** | Builders / analysts | Workspace left nav → **Genie Spaces** → open *Northgate Provisions — Sales Analytics*. URL `/genie/rooms/01f15d2bcc96149bbe3494375ce128a2`. Full chrome: **Configure / Monitor / Benchmark** tabs, Agent\|Chat toggle, Share. |
+| **Genie in Databricks One** | Business users | Top nav → **Switch apps** (grid icon) → **Genie — Business insights from data and AI** → lands on **Databricks One** (`/one`): *"What would you like to know?"* ask box + Home / Dashboards / Genie Spaces / Apps rail. Click the space card → opens `/genie/rooms/<id>?isDbOne=true` with simplified business chrome (no SQL editor). |
+
+> Both surfaces query the *same* space and the *same* governed tables/metric view — same space, two
+> doors. Builders enter via Genie Spaces in the workspace; business users via Databricks One → Genie.

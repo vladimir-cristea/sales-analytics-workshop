@@ -110,17 +110,14 @@ A simple question becomes one query. A *business* question often needs several s
 filter, aggregate, compare, then conclude. Agent mode lets Genie plan and chain those
 steps.
 
-1. Ask a multi-step question, for example:
+1. Check the question box is set to **Agent** (the toggle reads **Agent | Chat**, and Agent
+   is the default). There is also a "Deep Research" mode if you want to go further.
+2. Ask a multi-step question, for example:
    **"Which product categories are growing fastest in Scotland, and which account managers
    cover the most customers there so they can push those categories?"**
-2. Watch Genie's agent reasoning break the problem down, run more than one analysis, and
-   synthesise an answer. Expect something like: *Frozen is growing fastest (+85%), then
-   Alcohol (+26%); Priya Sharma covers the most Scottish outlets, so she should lead the
-   push.*
-
-💡 If your workspace has the **Genie Agent mode** preview enabled (Settings → Previews) you
-will see the steps laid out explicitly. Even without that named toggle, Genie's multi-step
-reasoning still answers questions like this in one go - ask your facilitator which is on.
+3. Watch Genie break the problem down, run more than one analysis, and synthesise an answer.
+   Expect something like: *Frozen is growing fastest (+85%), then Alcohol (+26%); Priya
+   Sharma covers the most Scottish outlets, so she should lead the push.*
 
 💡 Notice the difference from Part 2: this question cannot be answered by a single
 `GROUP BY`. It needs a growth analysis, a coverage analysis, and then a recommendation that
@@ -130,15 +127,19 @@ ties them together. Agent mode is doing analyst-style reasoning, not just transl
 
 The same space is reachable from two surfaces, aimed at two audiences.
 
-1. **Genie space (builder surface):** what you have been using. Left nav → **Genie** →
-   **"Northgate Provisions - Sales Analytics"**. This is the full builder, where a data team
+1. **Genie space (builder / analyst surface):** what you have been using. Left sidebar →
+   **Genie Spaces** → open **"Northgate Provisions - Sales Analytics"**. Full chrome:
+   Configure / Monitor / Benchmark tabs, the Agent | Chat toggle, Share - where a data team
    curates instructions, sample questions and trusted assets.
-2. **Genie in Databricks One (business-user surface):** open **Databricks One** (the
-   simplified business-user home) → **Genie** → the same space. Ask-and-answer only, none of
-   the SQL or builder chrome - the clean view a non-technical colleague gets.
+2. **Genie in Databricks One (business-user surface):** top nav → **Switch apps** (the grid
+   icon) → **"Genie - Business insights from data and AI"**. This opens **Databricks One**
+   (a clean home with an "What would you like to know?" Ask box and Home / Dashboards /
+   Genie Spaces / Apps in the left rail). Click the **"Northgate Provisions - Sales
+   Analytics"** card to chat. Same space, same governed data, no SQL editor or builder
+   chrome - the view a non-technical colleague gets.
 
-Open the same space both ways: it is one governed asset over the same governed tables, just
-two different experiences. (Your facilitator will share the direct link.)
+Same space, two doors: builders enter via Genie Spaces in the workspace; business users
+enter via Databricks One.
 
 ### Part 7: Metric views - one number, one source of truth (must-do)
 
@@ -217,9 +218,10 @@ The raw, deliberately dirty JSON is in a volume:
 Build your pipeline **into your own schema** (`ws_<your-name>`) so you do not clash with
 anyone else.
 
-💡 You are not expected to remember Spark syntax. Open **Genie Code** (the assistant in the
-editor) and describe what you want in English: *"create a streaming table that reads the
-JSON files in this volume path"*. Iterate. Read what it gives you, run it, fix it.
+💡 You are not expected to remember Spark syntax. Open **Genie Code** (the button in the
+workspace top nav - "Run multi-step data and AI tasks") and describe what you want in
+English: *"create a streaming table that reads the JSON files in this volume path"*.
+Iterate. Read what it gives you, run it, fix it.
 
 ### Part 1: Bronze - land the raw data, as-is
 

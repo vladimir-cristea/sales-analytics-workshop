@@ -321,7 +321,7 @@ Line profit  = revenue - `quantity * cost`.
 revenue should be **about £871.8k** across 2,200 order lines - lining up with the clean
 tables from Practical 1 (to the penny it depends on where you round, but it lands at
 £871,821). Your top product by revenue should be **Prosecco 750ml x6 (£60,693.48)** and
-your top account manager **Priya Sharma (£207,304.15)**.
+your top account manager **Priya Sharma (£207,304.23)**.
 
 💡 **Spot the subtlety.** Your per-product gold revenue lines up with the clean reference
 (about £871.8k), but your per-*customer* gold revenue comes out lower (**£793,959.93**). Why?

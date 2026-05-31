@@ -401,10 +401,14 @@ one-line CLI command if you prefer). It lands as `<your_schema>.<your_table>`.
 3. Try a few other `customer_id` values (1-70). Each single-row lookup comes back instantly.
 
 💡 That one row was computed with heavy OLAP (RFM, rolling-12-month, cross-sell affinity),
-but Postgres serves it as a sub-millisecond primary-key lookup - run `EXPLAIN` on the query
-and you will see an Index Scan on the `customer_id` key (~0.02 ms). This is the OLTP serving
-pattern: precompute the hard stuff in the lakehouse, serve it hot from Lakebase to thousands
-of concurrent app users.
+but Postgres serves it in **sub-millisecond** time. Run
+`EXPLAIN ANALYZE SELECT * FROM shared_data.customer_scorecard_synced WHERE customer_id = 42;`
+- at this tiny row count (the table is one page) Postgres correctly prefers a `Seq Scan`
+(execution time ~0.2 ms). The primary-key index is what keeps the lookup O(log n) **as the
+table grows**; to see that plan now, run `SET enable_seqscan = off;` first and re-run the
+EXPLAIN to get an `Index Scan using ..._pkey`. Either way this is the OLTP serving pattern:
+precompute the hard stuff in the lakehouse, serve it hot from Lakebase to thousands of
+concurrent app users.
 
 💡 Prefer the command line? Connect with `psql` using your Databricks identity as the
 Postgres role and a short-lived token as the password:

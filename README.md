@@ -50,6 +50,10 @@ documented catalog-creation cell for a customer's own workspace.
   build workspace we use `vcr_serverless_catalog`; the bootstrap has a documented cell
   for creating a fresh catalog on the customer's workspace.
 
+**What each participant needs:** a Databricks account that is a member of the
+`workshop_participants` group, and a modern web browser. That's it — no local install,
+nothing to download, nothing to bring. There is zero per-participant setup.
+
 ---
 
 ## Repository layout
@@ -65,17 +69,23 @@ documented catalog-creation cell for a customer's own workspace.
 
 ---
 
-## Agenda mapping
+## Agenda
 
-> _Placeholder — to be finalised by the content team._
+A suggested half-day shape. **Example timings — adjust to your event** (length, breaks,
+and depth are all flexible).
 
-| Time slot      | Session                              | Materials            |
-|----------------|--------------------------------------|----------------------|
-| _TBD_          | Welcome & platform overview          | `slides/`            |
-| _TBD_          | **Practical 1 — Genie**              | `genie/`             |
-| _TBD_          | **Practical 2 — Spark Declarative Pipelines** | `sdp_pipeline/`, `data/` |
-| _TBD_          | **Practical 3 — Lakebase**           | `lakebase/`          |
-| _TBD_          | Wrap-up & Q&A                        | `slides/`            |
+| Duration | Session                                          | Materials                |
+|----------|--------------------------------------------------|--------------------------|
+| 30 min   | Welcome & platform overview                      | `slides/`                |
+| 60 min   | **Practical 1 — Genie & AI/BI**                  | `genie/`                 |
+| 15 min   | Break                                            | —                        |
+| 75 min   | **Practical 2 — Spark Declarative Pipelines (with Genie Code)** | `sdp_pipeline/`, `data/` |
+| 15 min   | Break                                            | —                        |
+| 60 min   | **Practical 3 — Lakebase**                       | `lakebase/`              |
+| 15 min   | Wrap-up & Q&A                                    | `slides/`                |
+
+_Total ≈ 4½ hours including two breaks. Trim a practical or shorten the overview for a
+shorter session; extend the hands-on time if you have a full day._
 
 ---
 

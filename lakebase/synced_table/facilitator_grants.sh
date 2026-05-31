@@ -1,46 +1,66 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Practical 3 — Lakebase  •  Facilitator: grants that let a participant self-sync
+# Practical 3 — Lakebase  •  Facilitator enablement: GROUP-based, run ONCE
 # ---------------------------------------------------------------------------
-# PROVEN on the build workspace: a principal with NO workspace-admin and NO
-# metastore-admin can create its own synced table and read it from Postgres,
-# given exactly the grants below. Run ONCE per participant (as the facilitator).
+# Goal: enable all ~12 participants to create their own synced table WITHOUT
+# hand-granting each person. Everything below is granted to the
+# `workshop_participants` GROUP a single time — no per-participant loop.
 #
-# Two groups: Unity Catalog grants + two Lakebase/project grants. The second
-# group is the part people miss — a synced table needs BOTH a Postgres role on
-# the branch AND `CAN_USE` on the Database project.
+# PROVEN on the build workspace (zero-privilege identity, no workspace/metastore
+# admin): given exactly these grants, a participant runs `postgres
+# create-synced-table` into their own schema and reads it from Postgres.
+# Verified group-grantable: the Postgres role (identity_type=GROUP) AND the
+# project CAN_USE both accept a group, so even those are one-time group grants.
+#
+# PREREQ: `workshop_participants` must be an ACCOUNT-level group (UC resolves
+# grant principals at the account level; a workspace-local group will fail with
+# "Could not find principal"). The two Lakebase grants (role, project CAN_USE)
+# are workspace-level and accept either, but use the account group for consistency.
 # ---------------------------------------------------------------------------
 set -euo pipefail
 
 PROJECT="${PROJECT:-workshop-scorecard}"
-CATALOG="${CATALOG:-vcr_serverless_catalog}"            # adjust for your workspace
-PARTICIPANT_SCHEMA="${PARTICIPANT_SCHEMA:?e.g. ${CATALOG}.alice}"   # their target schema (catalog.schema)
-SOURCE_SCHEMA="${SOURCE_SCHEMA:-${CATALOG}.shared_data}"           # schema of the source gold table
+CATALOG="${CATALOG:-vcr_serverless_catalog}"           # adjust for your workspace
+GROUP="${GROUP:-workshop_participants}"
+SOURCE_SCHEMA="${SOURCE_SCHEMA:-${CATALOG}.shared_data}"          # shared fallback source
 SOURCE_TABLE="${SOURCE_TABLE:-${CATALOG}.shared_data.gold_customer_scorecard}"
-PRINCIPAL="${PRINCIPAL:?participant email (USER) or service-principal applicationId}"
-# For a human participant use identity_type USER + user_name in the ACL;
-# for a service principal use SERVICE_PRINCIPAL + service_principal_name.
-IDENTITY_TYPE="${IDENTITY_TYPE:-USER}"
-ACL_KEY="${ACL_KEY:-user_name}"   # set to service_principal_name for an SP
 
-echo "== UC grants =="
-databricks grants update catalog "${CATALOG}" --json "{\"changes\":[{\"principal\":\"${PRINCIPAL}\",\"add\":[\"USE CATALOG\"]}]}"
-databricks grants update schema  "${PARTICIPANT_SCHEMA}" --json "{\"changes\":[{\"principal\":\"${PRINCIPAL}\",\"add\":[\"USE SCHEMA\",\"CREATE TABLE\"]}]}"
-# Source access — only needed explicitly for the SHARED fallback source;
-# if the participant syncs their OWN gold table (in PARTICIPANT_SCHEMA) this is already covered.
-databricks grants update schema "${SOURCE_SCHEMA}" --json "{\"changes\":[{\"principal\":\"${PRINCIPAL}\",\"add\":[\"USE SCHEMA\"]}]}"
-databricks grants update table  "${SOURCE_TABLE}"  --json "{\"changes\":[{\"principal\":\"${PRINCIPAL}\",\"add\":[\"SELECT\"]}]}"
+echo "== UC grants (to the group, once) =="
+databricks grants update catalog "${CATALOG}" \
+  --json "{\"changes\":[{\"principal\":\"${GROUP}\",\"add\":[\"USE CATALOG\"]}]}"
+# Source access for the SHARED fallback table. (If participants sync their OWN
+# gold table from the SDP lab, they already own their schema, so this and their
+# target-schema CREATE TABLE are already covered — nothing extra to grant.)
+databricks grants update schema "${SOURCE_SCHEMA}" \
+  --json "{\"changes\":[{\"principal\":\"${GROUP}\",\"add\":[\"USE SCHEMA\"]}]}"
+databricks grants update table "${SOURCE_TABLE}" \
+  --json "{\"changes\":[{\"principal\":\"${GROUP}\",\"add\":[\"SELECT\"]}]}"
+# If participants instead share ONE target schema, grant it once too:
+#   databricks grants update schema ${CATALOG}.<shared_target_schema> \
+#     --json "{\"changes\":[{\"principal\":\"${GROUP}\",\"add\":[\"USE SCHEMA\",\"CREATE TABLE\"]}]}"
 
-echo "== Lakebase grants =="
-# (a) a Postgres role on the branch — use create-role, NOT raw SQL CREATE ROLE
-#     (raw SQL leaves NO_LOGIN and OAuth fails).
+echo "== Lakebase grants (to the group, once) =="
+# (a) ONE Postgres role for the whole group — verified working with
+#     identity_type=GROUP. Use create-role, NOT raw SQL (raw SQL leaves NO_LOGIN
+#     and OAuth fails).
 databricks postgres create-role "projects/${PROJECT}/branches/production" --json "{
-  \"spec\": {\"auth_method\": \"LAKEBASE_OAUTH_V1\", \"identity_type\": \"${IDENTITY_TYPE}\", \"postgres_role\": \"${PRINCIPAL}\"}
+  \"spec\": {\"auth_method\": \"LAKEBASE_OAUTH_V1\", \"identity_type\": \"GROUP\", \"postgres_role\": \"${GROUP}\"}
 }"
-# (b) CAN_USE on the Database project (workspace permission). NOTE: the
-#     permissions object id is the PROJECT_ID (e.g. workshop-scorecard), not its uid.
+# (b) CAN_USE on the Database project (workspace permission). The permissions
+#     object id is the PROJECT_ID (e.g. workshop-scorecard), not its uid.
 databricks permissions update database-projects "${PROJECT}" --json "{
-  \"access_control_list\": [{\"${ACL_KEY}\": \"${PRINCIPAL}\", \"permission_level\": \"CAN_USE\"}]
+  \"access_control_list\": [{\"group_name\": \"${GROUP}\", \"permission_level\": \"CAN_USE\"}]
 }"
 
-echo "Done. ${PRINCIPAL} can now run: databricks postgres create-synced-table ${PARTICIPANT_SCHEMA}.<table> …"
+echo "Done — every member of ${GROUP} can now create + read their own synced table."
+
+# ---------------------------------------------------------------------------
+# Per-identity fallback (only if you can't/won't use a group): loop the role +
+# project grant over a participant list, and grant UC per principal.
+#   for P in alice@co.com bob@co.com …; do
+#     databricks postgres create-role projects/${PROJECT}/branches/production \
+#       --json "{\"spec\":{\"auth_method\":\"LAKEBASE_OAUTH_V1\",\"identity_type\":\"USER\",\"postgres_role\":\"$P\"}}"
+#     databricks permissions update database-projects ${PROJECT} \
+#       --json "{\"access_control_list\":[{\"user_name\":\"$P\",\"permission_level\":\"CAN_USE\"}]}"
+#   done
+# ---------------------------------------------------------------------------

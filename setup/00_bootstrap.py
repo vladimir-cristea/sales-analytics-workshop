@@ -365,6 +365,65 @@ print("✅ gold_customer_scorecard built")
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ## 7b. Build the governed `sales_metrics` metric view
+# MAGIC
+# MAGIC A Unity Catalog **metric view** (DBR 17.2+) defining standardised KPIs in YAML over
+# MAGIC the clean `orders` fact, joined to `customers` and `products`. It gives Genie and
+# MAGIC dashboards one governed source of truth for revenue/profit/margin so every tool agrees.
+# MAGIC Queried with `MEASURE(...)`. The `Active Customers (90d)` measure is relative to
+# MAGIC `current_date()`; the dataset's reference "today" is its latest order date.
+
+# COMMAND ----------
+
+spark.sql(f"""
+CREATE OR REPLACE VIEW {CATALOG}.{SCHEMA}.sales_metrics
+WITH METRICS
+LANGUAGE YAML
+COMMENT 'Governed sales KPIs for Northgate Provisions Co. (orders fact joined to customers + products).'
+AS $$
+version: "1.1"
+source: {CATALOG}.{SCHEMA}.orders
+comment: "Governed sales KPIs over clean order lines."
+joins:
+  - name: customers
+    source: {CATALOG}.{SCHEMA}.customers
+    on: source.customer_id = customers.customer_id
+  - name: products
+    source: {CATALOG}.{SCHEMA}.products
+    on: source.product_id = products.product_id
+dimensions:
+  - name: Region
+    expr: customers.region
+  - name: Segment
+    expr: customers.segment
+  - name: Account Manager
+    expr: customers.account_manager
+  - name: Category
+    expr: products.category
+  - name: Order Month
+    expr: DATE_TRUNC('MONTH', order_date)
+measures:
+  - name: Total Revenue
+    expr: SUM(quantity * unit_price * (1 - discount_pct/100))
+  - name: Total Profit
+    expr: SUM(quantity * unit_price * (1 - discount_pct/100) - quantity * products.cost)
+  - name: Profit Margin %
+    expr: 100 * SUM(quantity * unit_price * (1 - discount_pct/100) - quantity * products.cost) / SUM(quantity * unit_price * (1 - discount_pct/100))
+  - name: Order Count
+    expr: COUNT(order_id)
+  - name: Units Sold
+    expr: SUM(quantity)
+  - name: Avg Order Value
+    expr: SUM(quantity * unit_price * (1 - discount_pct/100)) / COUNT(order_id)
+  - name: Active Customers (90d)
+    expr: COUNT(DISTINCT customer_id) FILTER (WHERE order_date >= current_date() - INTERVAL 90 DAYS)
+$$
+""")
+print("✅ sales_metrics metric view built")
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ## 8. Per-user schemas + participant grants
 # MAGIC
 # MAGIC Each participant gets their own schema (for the SDP lab, where they create their own
@@ -399,6 +458,8 @@ group_grants = [
     f"GRANT CREATE SCHEMA ON CATALOG {CATALOG} TO `{PARTICIPANTS_GROUP}`",
     f"GRANT USE SCHEMA ON SCHEMA {CATALOG}.{SCHEMA} TO `{PARTICIPANTS_GROUP}`",
     f"GRANT SELECT ON SCHEMA {CATALOG}.{SCHEMA} TO `{PARTICIPANTS_GROUP}`",
+    # SELECT on the schema already covers sales_metrics; granted explicitly for clarity.
+    f"GRANT SELECT ON VIEW {CATALOG}.{SCHEMA}.sales_metrics TO `{PARTICIPANTS_GROUP}`",
     f"GRANT READ VOLUME ON VOLUME {CATALOG}.{SCHEMA}.{VOLUME} TO `{PARTICIPANTS_GROUP}`",
 ]
 try:
@@ -433,6 +494,18 @@ UNION ALL SELECT 'product_performance_summary', COUNT(*) FROM {CATALOG}.{SCHEMA}
 UNION ALL SELECT 'monthly_sales_summary', COUNT(*) FROM {CATALOG}.{SCHEMA}.monthly_sales_summary
 UNION ALL SELECT 'gold_customer_scorecard', COUNT(*) FROM {CATALOG}.{SCHEMA}.gold_customer_scorecard
 ORDER BY table
+"""))
+
+# COMMAND ----------
+
+# Metric view check — must be queried with MEASURE() (SELECT * is unsupported).
+display(spark.sql(f"""
+SELECT `Segment`,
+       ROUND(MEASURE(`Total Revenue`), 2)  AS revenue,
+       ROUND(MEASURE(`Profit Margin %`), 2) AS margin_pct,
+       MEASURE(`Order Count`)               AS orders
+FROM {CATALOG}.{SCHEMA}.sales_metrics
+GROUP BY `Segment` ORDER BY revenue DESC
 """))
 
 # COMMAND ----------

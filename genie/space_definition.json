@@ -1,0 +1,326 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {
+        "id": "a1b2c3d4e5f600000000000000000012",
+        "question": [
+          "Who are our top 10 customers by revenue?"
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000013",
+        "question": [
+          "Which customers are at risk of churning?"
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000014",
+        "question": [
+          "Who are our key accounts?"
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000015",
+        "question": [
+          "Which outlets are discount-heavy buyers?"
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000016",
+        "question": [
+          "How has total sales revenue trended over the last 12 months?"
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000017",
+        "question": [
+          "Which product categories are growing fastest in Scotland?"
+        ]
+      }
+    ]
+  },
+  "data_sources": {
+    "tables": [
+      {
+        "identifier": "vcr_serverless_catalog.shared_data.customers",
+        "column_configs": [
+          {
+            "column_name": "account_manager",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true,
+            "synonyms": [
+              "rep",
+              "sales rep",
+              "AM",
+              "account manager"
+            ]
+          },
+          {
+            "column_name": "customer_name",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true,
+            "synonyms": [
+              "outlet",
+              "venue",
+              "account",
+              "site"
+            ]
+          },
+          {
+            "column_name": "join_date",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "region",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "segment",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true,
+            "description": [
+              "Customer tier: National Group, Regional, or Independent."
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "vcr_serverless_catalog.shared_data.monthly_sales_summary"
+      },
+      {
+        "identifier": "vcr_serverless_catalog.shared_data.orders",
+        "column_configs": [
+          {
+            "column_name": "currency",
+            "enable_format_assistance": true,
+            "description": [
+              "Always GBP."
+            ]
+          },
+          {
+            "column_name": "discount_pct",
+            "enable_format_assistance": true,
+            "description": [
+              "Whole-number percentage 0-20 (20 = 20%). Divide by 100 when applying: net = quantity*unit_price*(1-discount_pct/100)."
+            ]
+          },
+          {
+            "column_name": "order_date",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "quantity",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "unit_price",
+            "enable_format_assistance": true,
+            "description": [
+              "Sold price per unit in GBP, before discount."
+            ]
+          }
+        ]
+      },
+      {
+        "identifier": "vcr_serverless_catalog.shared_data.product_performance_summary"
+      },
+      {
+        "identifier": "vcr_serverless_catalog.shared_data.products",
+        "column_configs": [
+          {
+            "column_name": "category",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true
+          },
+          {
+            "column_name": "cost",
+            "enable_format_assistance": true,
+            "description": [
+              "Northgate's unit cost in GBP; used for profit = revenue - quantity*cost."
+            ]
+          },
+          {
+            "column_name": "list_price",
+            "enable_format_assistance": true
+          },
+          {
+            "column_name": "product_name",
+            "enable_format_assistance": true,
+            "enable_entity_matching": true,
+            "synonyms": [
+              "SKU",
+              "item"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "instructions": {
+    "text_instructions": [
+      {
+        "id": "a1b2c3d4e5f600000000000000000018",
+        "content": [
+          "Northgate Provisions Co. is a fictional B2B food & beverage wholesaler supplying outlets (pubs, cafes, delis, convenience stores) across the UK. The `orders` table is at order-LINE grain: one row per product per order. The reference \"today\" for all recency / rolling-window questions is 2026-05-31. ALL monetary values are in British pounds (GBP, \u00a3). Never label amounts with $ or USD. \n\ndiscount_pct is a WHOLE-NUMBER percentage between 0 and 20 (e.g. 20 means 20%), NOT a fraction. You MUST divide it by 100 when applying it. Net line revenue = quantity * unit_price * (1 - discount_pct/100). Net line profit = quantity * unit_price * (1 - discount_pct/100) - quantity * products.cost. The words 'revenue', 'sales' and 'turnover' always mean NET revenue (after discount). Never compute revenue as quantity*unit_price*(1-discount_pct) \u2014 that omits the /100 and produces negative numbers. \n\nVocabulary: 'outlet', 'venue', 'account', 'site', 'pub', 'cafe', 'customer' all mean a row in the customers table. 'rep', 'account manager', 'AM', 'sales rep' all mean customers.account_manager. 'SKU', 'item', 'line', 'product' mean the products table. Categories are Beverages, Ambient, Chilled, Frozen, Alcohol. Segments are exactly 'National Group', 'Regional', 'Independent'. Regions are UK regions (e.g. Scotland, London, Midlands). \n\nBusiness definitions (use these exactly). KEY ACCOUNT: a customer in the 'National Group' segment OR whose total net revenue is in the top 10% of all customers. AT-RISK customer: an active customer (has placed at least one order) whose most recent order date is more than 45 days before DATE'2026-05-31' (i.e. DATEDIFF(DATE'2026-05-31', last order date) > 45) \u2014 they have gone quiet. UNDERPERFORMING customer: a customer whose total net revenue is in the bottom quartile (lowest 25%) WITHIN their own segment. DISCOUNT-HEAVY buyer: a customer whose average discount_pct across their order lines is 11.5% or higher. GROWING FASTEST (category/region/segment): compare net revenue in the most recent 3 months to the prior 3 months; growth rate = (recent - prior) / prior. \n\nTable usage: product_performance_summary and monthly_sales_summary are PRE-AGGREGATED convenience tables \u2014 do not join them to orders and re-aggregate. monthly_sales_summary already holds net total_revenue and total_profit by month, region and segment (use it for trends). product_performance_summary holds per-product totals. For any breakdown by segment, region, account manager, or customer, compute from orders joined to customers and products at line grain."
+        ]
+      }
+    ],
+    "example_question_sqls": [
+      {
+        "id": "a1b2c3d4e5f600000000000000000006",
+        "question": [
+          "Who are our top 10 customers by revenue?"
+        ],
+        "sql": [
+          "SELECT c.customer_id, c.customer_name, ROUND(SUM(o.quantity*o.unit_price*(1-o.discount_pct/100)),2) AS net_revenue FROM vcr_serverless_catalog.shared_data.orders o JOIN vcr_serverless_catalog.shared_data.customers c ON o.customer_id=c.customer_id GROUP BY c.customer_id, c.customer_name ORDER BY net_revenue DESC LIMIT 10;"
+        ],
+        "usage_guidance": [
+          "Revenue = net of discount (discount_pct/100). Top customers by spend."
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000007",
+        "question": [
+          "Which customers are at risk of churning?"
+        ],
+        "sql": [
+          "WITH last_o AS (SELECT customer_id, MAX(order_date) AS last_order_date, DATEDIFF(DATE'2026-05-31', MAX(order_date)) AS recency_days, COUNT(*) AS lifetime_orders FROM vcr_serverless_catalog.shared_data.orders GROUP BY customer_id) SELECT c.customer_id, c.customer_name, c.region, c.segment, c.account_manager, l.last_order_date, l.recency_days FROM last_o l JOIN vcr_serverless_catalog.shared_data.customers c ON l.customer_id=c.customer_id WHERE l.recency_days > 45 ORDER BY l.recency_days DESC;"
+        ],
+        "usage_guidance": [
+          "At-risk = active customer whose most recent order is >45 days before 2026-05-31."
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000008",
+        "question": [
+          "Which outlets are discount-heavy buyers?"
+        ],
+        "sql": [
+          "SELECT c.customer_id, c.customer_name, ROUND(AVG(o.discount_pct),2) AS avg_discount_pct FROM vcr_serverless_catalog.shared_data.orders o JOIN vcr_serverless_catalog.shared_data.customers c ON o.customer_id=c.customer_id GROUP BY c.customer_id, c.customer_name HAVING AVG(o.discount_pct) >= 11.5 ORDER BY avg_discount_pct DESC;"
+        ],
+        "usage_guidance": [
+          "Discount-heavy = average discount_pct >= 11.5%."
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000009",
+        "question": [
+          "Who are our key accounts?"
+        ],
+        "sql": [
+          "WITH rev AS (SELECT c.customer_id, c.customer_name, c.segment, SUM(o.quantity*o.unit_price*(1-o.discount_pct/100)) AS net_revenue FROM vcr_serverless_catalog.shared_data.orders o JOIN vcr_serverless_catalog.shared_data.customers c ON o.customer_id=c.customer_id GROUP BY c.customer_id, c.customer_name, c.segment), r AS (SELECT *, PERCENT_RANK() OVER (ORDER BY net_revenue) AS rev_pct FROM rev) SELECT customer_id, customer_name, segment, ROUND(net_revenue,2) AS net_revenue FROM r WHERE segment='National Group' OR rev_pct >= 0.90 ORDER BY net_revenue DESC;"
+        ],
+        "usage_guidance": [
+          "Key account = National Group segment OR top 10% by net revenue."
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000010",
+        "question": [
+          "Which customers are underperforming?"
+        ],
+        "sql": [
+          "WITH rev AS (SELECT c.customer_id, c.customer_name, c.segment, SUM(o.quantity*o.unit_price*(1-o.discount_pct/100)) AS net_revenue FROM vcr_serverless_catalog.shared_data.orders o JOIN vcr_serverless_catalog.shared_data.customers c ON o.customer_id=c.customer_id GROUP BY c.customer_id, c.customer_name, c.segment), q AS (SELECT *, NTILE(4) OVER (PARTITION BY segment ORDER BY net_revenue) AS seg_quartile FROM rev) SELECT customer_id, customer_name, segment, ROUND(net_revenue,2) AS net_revenue FROM q WHERE seg_quartile=1 ORDER BY segment, net_revenue;"
+        ],
+        "usage_guidance": [
+          "Underperforming = bottom revenue quartile within the customer's own segment."
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000011",
+        "question": [
+          "Which product categories are growing fastest in Scotland?"
+        ],
+        "sql": [
+          "WITH m AS (SELECT p.category, SUM(CASE WHEN o.order_date > ADD_MONTHS(DATE'2026-05-31',-3) THEN o.quantity*o.unit_price*(1-o.discount_pct/100) ELSE 0 END) AS recent_rev, SUM(CASE WHEN o.order_date <= ADD_MONTHS(DATE'2026-05-31',-3) AND o.order_date > ADD_MONTHS(DATE'2026-05-31',-6) THEN o.quantity*o.unit_price*(1-o.discount_pct/100) ELSE 0 END) AS prior_rev FROM vcr_serverless_catalog.shared_data.orders o JOIN vcr_serverless_catalog.shared_data.customers c ON o.customer_id=c.customer_id JOIN vcr_serverless_catalog.shared_data.products p ON o.product_id=p.product_id WHERE c.region='Scotland' GROUP BY p.category) SELECT category, ROUND(recent_rev,2) AS recent_rev, ROUND(prior_rev,2) AS prior_rev, ROUND(100*(recent_rev-prior_rev)/NULLIF(prior_rev,0),1) AS growth_pct FROM m ORDER BY growth_pct DESC;"
+        ],
+        "usage_guidance": [
+          "Growth = (last 3 months net revenue - prior 3 months) / prior, by category, filtered to Scotland."
+        ]
+      }
+    ],
+    "join_specs": [
+      {
+        "id": "a1b2c3d4e5f600000000000000000001",
+        "left": {
+          "identifier": "vcr_serverless_catalog.shared_data.orders",
+          "alias": "orders"
+        },
+        "right": {
+          "identifier": "vcr_serverless_catalog.shared_data.customers",
+          "alias": "customers"
+        },
+        "sql": [
+          "`orders`.`customer_id` = `customers`.`customer_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      },
+      {
+        "id": "a1b2c3d4e5f600000000000000000002",
+        "left": {
+          "identifier": "vcr_serverless_catalog.shared_data.orders",
+          "alias": "orders"
+        },
+        "right": {
+          "identifier": "vcr_serverless_catalog.shared_data.products",
+          "alias": "products"
+        },
+        "sql": [
+          "`orders`.`product_id` = `products`.`product_id`",
+          "--rt=FROM_RELATIONSHIP_TYPE_MANY_TO_ONE--"
+        ]
+      }
+    ],
+    "sql_snippets": {
+      "filters": [],
+      "expressions": [
+        {
+          "id": "a1b2c3d4e5f600000000000000000005",
+          "display_name": "Net line revenue",
+          "sql": [
+            "`vcr_serverless_catalog`.`shared_data`.`orders`.quantity * `vcr_serverless_catalog`.`shared_data`.`orders`.unit_price * (1 - `vcr_serverless_catalog`.`shared_data`.`orders`.discount_pct/100) AS line_net_revenue"
+          ],
+          "instruction": [
+            "Per-line net revenue after discount."
+          ],
+          "synonyms": [
+            "line revenue"
+          ]
+        }
+      ],
+      "measures": [
+        {
+          "id": "a1b2c3d4e5f600000000000000000003",
+          "display_name": "Net Revenue",
+          "sql": [
+            "SUM(`vcr_serverless_catalog`.`shared_data`.`orders`.quantity * `vcr_serverless_catalog`.`shared_data`.`orders`.unit_price * (1 - `vcr_serverless_catalog`.`shared_data`.`orders`.discount_pct/100)) AS net_revenue"
+          ],
+          "instruction": [
+            "Net revenue after discount, in GBP. Use for revenue/sales/turnover."
+          ],
+          "synonyms": [
+            "revenue",
+            "sales",
+            "turnover"
+          ]
+        },
+        {
+          "id": "a1b2c3d4e5f600000000000000000004",
+          "display_name": "Net Profit",
+          "sql": [
+            "SUM(`vcr_serverless_catalog`.`shared_data`.`orders`.quantity * `vcr_serverless_catalog`.`shared_data`.`orders`.unit_price * (1 - `vcr_serverless_catalog`.`shared_data`.`orders`.discount_pct/100) - `vcr_serverless_catalog`.`shared_data`.`orders`.quantity * `vcr_serverless_catalog`.`shared_data`.`products`.cost) AS net_profit"
+          ],
+          "instruction": [
+            "Net profit = net revenue minus quantity*cost, in GBP."
+          ],
+          "synonyms": [
+            "profit",
+            "gross profit"
+          ]
+        }
+      ]
+    }
+  }
+}

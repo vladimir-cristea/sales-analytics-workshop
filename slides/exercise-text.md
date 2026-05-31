@@ -350,6 +350,13 @@ work.
 **Your Task:** work through the tiers below. Get the must-do done first, then go as far as
 time allows. You will use the database **`databricks_postgres`** throughout.
 
+> _Facilitator note: participants need no admin rights to self-sync. The six grants per
+> person (4 in Unity Catalog: USE CATALOG; USE SCHEMA + CREATE TABLE on their own schema;
+> USE SCHEMA + SELECT on the source gold table - plus 2 in Lakebase: a Postgres role via
+> `databricks postgres create-role`, and `CAN_USE` on the `workshop-scorecard` database
+> project) are scripted in `lakebase/synced_table/facilitator_grants.sh`. Run that before
+> the session; the per-user UC schema grants are already handled by the bootstrap._
+
 ### Part 1: Sync the scorecard into Lakebase (must-do)
 
 Create a **synced table** from your gold scorecard in Unity Catalog into Postgres. The

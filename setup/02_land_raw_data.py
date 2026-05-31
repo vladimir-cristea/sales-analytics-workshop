@@ -1,25 +1,25 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Step 2 — Land the committed JSON into the UC volume
+# MAGIC # Step 2 - Land the committed JSON into the UC volume
 # MAGIC
-# MAGIC Transparency copy of section 4 of `00_bootstrap` — copies the repo's `raw/` and
+# MAGIC Transparency copy of section 4 of `00_bootstrap` - copies the repo's `raw/` and
 # MAGIC `clean/` JSON into the volume with **no manual upload**.
 # MAGIC
 # MAGIC ## Volume-copy robustness (known gotcha)
 # MAGIC Writing repo files into a UC volume on serverless has historically been flaky. The
 # MAGIC `copy_into_volume` helper tries three methods in order and reports which one worked:
-# MAGIC 1. **FUSE write** — `open(volume_path, "wb")` (works on this workspace),
+# MAGIC 1. **FUSE write** - `open(volume_path, "wb")` (works on this workspace),
 # MAGIC 2. **`dbutils.fs.cp`** with an explicit `file:` scheme,
-# MAGIC 3. **SDK Files API** — `WorkspaceClient().files.upload(...)` (REST, FUSE-independent).
+# MAGIC 3. **SDK Files API** - `WorkspaceClient().files.upload(...)` (REST, FUSE-independent).
 
 # COMMAND ----------
 
 import os, io
 
-CATALOG, SCHEMA, VOLUME = "vcr_serverless_catalog", "shared_data", "data"
+CATALOG, SCHEMA, VOLUME = "workshop", "shared_data", "data"
 VOLUME_ROOT = f"/Volumes/{CATALOG}/{SCHEMA}/{VOLUME}"
 
-# Repo data dir — derived from this notebook's path (repo_root/data).
+# Repo data dir - derived from this notebook's path (repo_root/data).
 nb_path = (dbutils.notebook.entry_point.getDbutils().notebook()
            .getContext().notebookPath().get())
 repo_root = os.path.dirname(os.path.dirname(nb_path))

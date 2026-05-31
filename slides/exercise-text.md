@@ -7,204 +7,98 @@ outlets (pubs, cafes, delis, convenience stores) across the UK.
 
 **Shared facts you can rely on**
 
-- Catalog `vcr_serverless_catalog`, schema `shared_data` (the catalog name may differ on
+- Catalog `workshop`, schema `shared_data` (the catalog name may differ on
   your workspace - the facilitator will tell you).
 - Clean curated tables: `customers`, `products`, `orders`, plus pre-aggregated
   `product_performance_summary` and `monthly_sales_summary`.
 - Governed metric view: `sales_metrics`.
 - Raw, deliberately messy JSON lives in a volume at
-  `/Volumes/vcr_serverless_catalog/shared_data/data/raw/`.
+  `/Volumes/workshop/shared_data/data/raw/`.
 - Your personal scratch schema is `ws_<your-name>` (created for you by the setup).
 - Segments: National Group, Regional, Independent. Categories: Beverages, Ambient,
   Chilled, Frozen, Alcohol. Everything is in GBP. "Today" for this dataset is
   **31 May 2026**.
-
-> _Facilitator note: the figures quoted throughout were tested live on the build workspace
-> with this exact dataset. They should reproduce as-is; if the data is ever regenerated they
-> may shift slightly, so confirm the headline numbers before the session. The teaching points
-> (the ranking flips, the impossible counts, the orphaned facts) hold regardless._
 
 ---
 
 ## Practical 1 - Ask your data anything, with Genie
 
 Genie lets anyone query data in plain English. No SQL, no BI tool, no waiting on a data
-team. You are the new analyst at Northgate Provisions and your job is to understand the
-business by simply asking.
+team. You are the new analyst at Northgate Provisions: get to know the business by asking.
 
-**Your Task:** open the **"Northgate Provisions - Sales Analytics"** Genie space and work
-through the parts below. You are not writing SQL. You are having a conversation. Parts 1 to 6
-are the guided tour; **Part 7 (metric views) is the must-do highlight**, and there is an
-optional Bonus at the end.
+**Your Task:** open the **"Northgate Provisions - Sales Analytics"** Genie space and explore.
+You are not writing SQL, you are having a conversation. The prompts below are starting points,
+not a script - follow whatever you find interesting.
 
-> _Facilitator note: this practical uses three Genie spaces - the curated "Northgate
-> Provisions - Sales Analytics" (Parts 1-6) and two A/B spaces, "Northgate Provisions - Base
-> Only (no context)" and "Northgate Provisions - Metric View Comparison" (Parts 4 and 7).
-> Have all three open before the session (search by name, or share the direct links)._
+### Warm up
 
-### Part 1: Get your bearings
+Get your bearings. Ask how many customers, products and orders there are, or what the data
+covers. Open the SQL behind any answer: you did not write it, but it is right there to inspect.
 
-1. Open the Genie space and read the suggested questions it offers.
-2. Ask: **"How many customers, products and orders do we have?"**
-3. Click into the answer and open the SQL Genie generated. You did not write it, but it
-   is right there if you want to check the working.
+💡 Every answer is real, governed SQL over Unity Catalog tables - queries you could have
+written yourself.
 
-💡 Every answer is backed by real, governed SQL over Unity Catalog tables. Genie is not
-guessing; it is generating queries you could have written yourself.
+### Explore the business
 
-### Part 2: Answer real business questions
+Pull on a few threads and follow the answers wherever they lead:
 
-Ask these one at a time. Read each answer before moving on. Sample answers from the dataset
-are shown so you can sanity-check yours.
+- Who are your biggest customers? Your best-selling products?
+- Which outlets are slipping - ordering less, or gone quiet?
+- Where are you giving away the most discount?
+- How are sales trending over the year? Which regions or segments lead?
 
-1. **"Who are our top 10 customers by revenue?"** (Willow Eatery tops it at ~£21,818,
-   then Bridge Street Bistro ~£19,423.)
-2. **"Which customers are at risk of churning?"** (4 outlets that have gone quiet: The
-   Anchor Eatery, Market Square Bistro, Ashfield Deli, Station Grill.)
-3. **"Which outlets are discount-heavy buyers?"** (9 outlets averaging 11.5%+ discount,
-   led by The Royal Oak Diner at 12.5%.)
-4. **"Who are our key accounts?"** (19 of them: National Group outlets plus anyone in the
-   top 10% by revenue.)
-5. **"How has total sales revenue trended over the last 12 months?"** (Rising into the
-   recent quarter, from a ~£35k low to a ~£61k high.)
-6. **"Which customers are underperforming?"** (The bottom revenue quartile within each
-   segment.)
+Genie remembers the conversation, so build on an answer instead of starting over: ask
+"which region leads?", then "and which segment within it?", then "show me the top customers
+there". If an answer surprises you, just ask "why?".
 
-💡 Use the AI Assistant or the "Explain" option if an answer surprises you. Ask Genie a
-follow-up like "why?" or "show me the breakdown" and it keeps the context.
+💡 Notice Genie already understands your business vocabulary - words like "at-risk",
+"key account" or "outlet". That is curated business context behind the scenes, and it is what
+makes the answers trustworthy. More on that below.
 
-### Part 3: Have a conversation
+### Let Genie reason for you (Agent mode)
 
-Genie remembers what you just asked. Build on a previous answer instead of starting over.
+Some questions take several steps - filter, compare, then conclude. Agent mode (the default
+in the question box) plans and chains them. Try a compound question and watch it work, e.g.:
 
-1. Ask: **"Which region has the highest revenue?"**
-2. Then follow up: **"And which segment within that region?"**
-3. Then: **"Show me the top 5 customers there."**
+> *"Which product categories are growing fastest in Scotland, and which account managers
+> should push them?"*
 
-Notice you never repeated the region. That is conversational analytics.
+That cannot be answered by a single `GROUP BY` - Genie is doing analyst-style reasoning, not
+just translating one question into one query.
 
-### Part 4: Why business context matters
+### Two ways in
 
-Out of the box Genie knows your tables. It does not know what *your team means* by "at-risk",
-or quirks like "discount is stored as a percentage". The curated "Sales Analytics" space you
-have been using already has that context baked in - which is exactly why your answers in
-Parts 1 to 3 were sensible. To feel the difference, compare it against the no-context space.
+The same space has two front doors:
 
-1. **See it without context.** On **"Northgate Provisions - Base Only (no context)"**, ask
-   **"Which customers are at risk of churning?"** With no definition of "at-risk", Genie has
-   nothing to anchor on and typically returns nothing useful (often 0 rows).
-2. **See it with context.** Ask the same question on the curated **"Northgate Provisions -
-   Sales Analytics"** space. Because someone defined "at-risk" (no order in the last 45 days)
-   in the semantic layer, you get the 4 quiet outlets. The definition lives in the space, not
-   in each person's head.
-3. **The other kind of context: expression rules.** The curated space also encodes that
-   revenue must apply the discount as `discount_pct / 100`. Without that rule, Genie can read
-   `discount_pct = 20` as "subtract 20" instead of "subtract 20%", and revenue comes back
-   wildly wrong (often **negative**) - try **"Who are our top 10 customers by revenue?"** on
-   each space and compare.
+- **Builders and analysts** open it from the workspace: left nav → **Genie**.
+- **Business users** open it from **Databricks One**: top nav → **Switch apps** → **Genie**,
+  for a clean, ask-and-answer view with none of the builder chrome.
 
-💡 This is how a Genie space goes from "clever demo" to "trusted internal tool": curated
-definitions, synonyms, expression rules and sample questions that encode how your business
-actually talks. Everything in this part is pre-built on the two spaces, so there is nothing
-to edit - just compare the answers.
+Open it both ways - one governed asset over the same governed data, two experiences.
 
-### Part 5: Agent mode - let Genie reason in steps
+### Why governed metrics matter
 
-A simple question becomes one query. A *business* question often needs several steps:
-filter, aggregate, compare, then conclude. Agent mode lets Genie plan and chain those
-steps.
+Business context is what turns Genie from a clever demo into something you can trust. Two
+spaces are set up so you can feel the difference:
 
-1. Check the question box is set to **Agent** (the toggle reads **Agent | Chat**, and Agent
-   is the default). There is also a "Deep Research" mode if you want to go further.
-2. Ask a multi-step question, for example:
-   **"Which product categories are growing fastest in Scotland, and which account managers
-   cover the most customers there so they can push those categories?"**
-3. Watch Genie break the problem down, run more than one analysis, and synthesise an answer.
-   Expect something like: *Frozen is growing fastest (+85%), then Alcohol (+26%); Priya
-   Sharma covers the most Scottish outlets, so she should lead the push.*
+- Ask the **same** question on **"Northgate Provisions - Base Only (no context)"** and on
+  **"Northgate Provisions - Metric View Comparison"** - something like
+  *"active customers (90d) by segment"*.
+- Compare the answers. The base space has no governed metric, so Genie stitches together
+  pre-aggregated tables and badly over-counts - you will see totals larger than the customer
+  base actually is. The metric-view space uses one governed definition and returns a count
+  that can actually be true.
 
-💡 Notice the difference from Part 2: this question cannot be answered by a single
-`GROUP BY`. It needs a growth analysis, a coverage analysis, and then a recommendation that
-ties them together. Agent mode is doing analyst-style reasoning, not just translation.
+Open the SQL behind each to see why they differ. The lesson: a **metric view** pins a business
+definition in one place, so Genie, dashboards and SQL all give the same answer.
 
-### Part 6: The two front doors to Genie
+💡 Genie is non-deterministic, so your exact numbers will vary from run to run - which is
+rather the whole point of governing the definition.
 
-The same space is reachable from two surfaces, aimed at two audiences.
+### If you have time
 
-1. **Genie space (builder / analyst surface):** what you have been using. Left sidebar →
-   **Genie Spaces** → open **"Northgate Provisions - Sales Analytics"**. Full chrome:
-   Configure / Monitor / Benchmark tabs, the Agent | Chat toggle, Share - where a data team
-   curates instructions, sample questions and trusted assets.
-2. **Genie in Databricks One (business-user surface):** top nav → **Switch apps** (the grid
-   icon) → **"Genie - Business insights from data and AI"**. This opens **Databricks One**
-   (a clean home with an "What would you like to know?" Ask box and Home / Dashboards /
-   Genie Spaces / Apps in the left rail). Click the **"Northgate Provisions - Sales
-   Analytics"** card to chat. Same space, same governed data, no SQL editor or builder
-   chrome - the view a non-technical colleague gets.
-
-Same space, two doors: builders enter via Genie Spaces in the workspace; business users
-enter via Databricks One.
-
-### Part 7: Metric views - one number, one source of truth (must-do)
-
-This is the most important part of the practical. We are going to see *why* governed metrics
-matter, using two purpose-built spaces side by side:
-
-- **"Northgate Provisions - Base Only (no context)"** - the summary tables, no governed
-  metric. The *without* arm.
-- **"Northgate Provisions - Metric View Comparison"** - the governed `sales_metrics` metric
-  view. The *with* arm.
-
-(These are separate from the curated "Sales Analytics" space you used in Parts 1-6, which is
-already governed and would not visibly "break".)
-
-**Step 1 - ask the without-metric space and get an impossible answer.**
-
-1. Open **"Northgate Provisions - Base Only (no context)"** and ask exactly:
-   **"active customers (90d) by segment"**.
-2. Genie returns badly inflated counts - something like **Independent 69, Regional 32,
-   National Group 20**, though you may see even larger numbers (e.g. 131/61/38) on another
-   run. Either way it is *impossible*: every figure far exceeds the true segment totals of
-   **41 / 17 / 12**. Open the SQL: this space has only the pre-aggregated summary tables, no
-   customer-level table, so Genie can only **sum monthly active-customer counts** - it has no
-   way to count distinct customers, and double-counts anyone who ordered in more than one
-   month (and how many months it sums varies from run to run, which is why the exact figure
-   wanders).
-
-**Step 2 - ask the with-metric space and get the truth.**
-
-3. Open **"Northgate Provisions - Metric View Comparison"** and ask the same thing:
-   **"active customers (90d) by segment"**.
-4. Now Genie uses the governed `Active Customers (90d)` measure (a proper distinct count) and
-   returns **Independent 41, Regional 17, National Group 12** - numbers that can actually be
-   true. Same question, two spaces, one of them simply cannot be wrong.
-
-💡 Use that exact phrasing, **"active customers (90d) by segment"**. If you instead say
-"...in the last 90 days...", the governed side may answer National Group **11** (a
-month-grain edge effect) rather than 12. The teaching point is identical; the round numbers
-are just cleaner with the short phrasing.
-
-⚠️ The deeper problem: with no governed measure, the *definition* of "active customer" lives
-in whatever SQL Genie improvises - and it will even shift with how you phrase the question
-(ask for "distinct" customers and the summary-only space still sums, just over a different
-window). When the definition lives in the query, every asker can get a different number. A
-metric view pins it in **one** governed place, so `sales_metrics` returns the same answer
-every time - to Genie, to dashboards, to notebooks. In SQL you would pull a measure out with
-`MEASURE("Active Customers (90d)")`; Genie does that for you under the hood.
-
-💡 Optional aside - it is not just counts. Ratios are governed too: `Profit Margin %` is
-defined once as `SUM(profit)/SUM(revenue)` (a ratio of sums), so it cannot drift into the
-naive average-of-per-line-ratios that quietly mis-ranks segments. Same principle, subtler
-symptom.
-
-### Bonus (if you finish early)
-
-- **Build your own metric.** Create a metric view that adds a measure of your own (for
-  example *average order value* = `SUM(revenue) / COUNT(DISTINCT order_id)`), add it as a
-  source, and ask Genie to use it.
-- **Conversation API.** Genie is also callable from code, so you can embed it in an app.
-  Note: this needs a little CLI/token setup, so treat it as a stretch goal. Ask the
-  facilitator for the endpoint snippet if you want to try it.
+- Add a measure of your own to a metric view, then ask Genie to use it.
+- Genie is callable from code too (the Conversation API) if you fancy wiring it into an app.
 
 ---
 
@@ -216,37 +110,37 @@ now you.
 
 You are going to build a **medallion pipeline** (bronze → silver → gold) on the *raw,
 messy* Northgate data, using **Genie Code** to help you write it. There is no fill-in-the
-blanks file. You get the brief and the rules; *you* decide how to prompt your way there.
+blanks file: you get the brief and the rules, and *you* decide how to prompt your way there.
 
 **Time to build!**
 
 The raw, deliberately dirty JSON is in a volume:
 
 ```
-/Volumes/vcr_serverless_catalog/shared_data/data/raw/customers/
-/Volumes/vcr_serverless_catalog/shared_data/data/raw/products/
-/Volumes/vcr_serverless_catalog/shared_data/data/raw/orders/
+/Volumes/workshop/shared_data/data/raw/customers/
+/Volumes/workshop/shared_data/data/raw/products/
+/Volumes/workshop/shared_data/data/raw/orders/
 ```
 
 Build your pipeline **into your own schema** (`ws_<your-name>`) so you do not clash with
-anyone else. All three layers - bronze, silver and gold - are core; build all three. The
-**Bonus** at the end is optional.
+anyone else. All three layers are core; the **Bonus** at the end is optional.
 
 💡 You are not expected to remember Spark syntax. Open **Genie Code** (the button in the
-workspace top nav - "Run multi-step data and AI tasks") and describe what you want in
-English: *"create a streaming table that reads the JSON files in this volume path"*.
-Iterate. Read what it gives you, run it, fix it.
+workspace top nav) and describe what you want in plain English:
+*"create a streaming table that reads the JSON files in this volume path"*. Iterate: read
+what it gives you, run it, fix it.
 
 ### Part 1: Bronze - land the raw data, as-is
 
 Create one bronze table per entity (`bronze_customers`, `bronze_products`,
 `bronze_orders`) that simply reads the raw JSON from the volume. **Do not clean anything
-yet.** Bronze is the faithful, unaltered copy of what landed.
+yet.** Bronze is the faithful, unaltered copy of what landed - dirt and all.
 
 💡 Ask Genie Code for an "Auto Loader streaming table" reading the volume path. A nice
 touch is to stamp each row with where and when it landed (`_ingested_at`, `_source_file`).
 
-⚠️ Three things that trip people up in a pipeline (let Genie Code hit them, then fix):
+⚠️ Three things that commonly trip people up (let Genie Code hit them, then fix):
+
 - A streaming table needs `FROM STREAM read_files(...)`. Plain `FROM read_files(...)` is a
   batch query and errors with *"Cannot create streaming table from batch query"*. The
   `STREAM` keyword is what makes it Auto Loader.
@@ -255,9 +149,6 @@ touch is to stamp each row with where and when it landed (`_ingested_at`, `_sour
 - On dirty JSON, pin the column types with `schemaHints` (for example
   `'order_id INT, customer_id INT, quantity INT, order_date DATE, unit_price DECIMAL(10,2),
   discount_pct DECIMAL(5,2)'`). Without them, one garbage value can flip an inferred type.
-
-You should land roughly **81 customers, 37 products, 2,261 orders** in bronze - more than
-the clean counts, because the dirt is still in.
 
 ### Part 2: Silver - clean, validate and de-duplicate
 
@@ -294,14 +185,8 @@ needs a window function over the whole table, which a streaming query cannot do.
 `silver_orders` is best built as a **materialized view**. If Genie Code's first attempt
 errors on the de-dup, that is why - ask it to make that table a materialized view.
 
-You should end up with roughly **64 customers, 34 products and 2,200 orders** in silver.
-Products and orders match the clean reference exactly (34 and 2,200). Customers come out
-**6 lower** than the 70 clean customers, because 6 rows had corrupted regions and were
-dropped - you will see why that matters in Part 3. (So do not be alarmed that
-`SELECT COUNT(*)` on the clean `customers` table shows 70: silver is meant to be lower.)
-
-⚠️ Resist the urge to join here. Silver stays one-table-per-entity. Joining is gold's job
-- it keeps each layer single-purpose and easy to debug.
+⚠️ Resist the urge to join here. Silver stays one-table-per-entity. Joining is gold's job:
+it keeps each layer single-purpose and easy to debug.
 
 ### Part 3: Gold - join and aggregate into business metrics
 
@@ -317,27 +202,22 @@ tables are usually best as **materialized views**. Build:
 - **`gold_rep_performance`** - per account manager: revenue, profit, margin, average order
   value, number of customers.
 - **`gold_at_risk_customers`** - customers with no order in the last 30 days (against the
-  dataset's "today" of 2026-05-31). Outlets reorder roughly fortnightly, so 30 days is
-  more than twice their normal cadence - a fair "gone quiet" signal. (This is a stricter
-  30-day window than Practical 1's 45-day churn definition, so you will get **9** here, not
-  the 4 from Genie - same idea, different threshold.)
+  dataset's "today"). Outlets reorder roughly fortnightly, so 30 days is a fair "gone quiet"
+  signal. (This is a stricter window than the at-risk definition Genie used in Practical 1,
+  so expect a different count - same idea, different threshold.)
 
 Line revenue = `quantity * unit_price * (1 - discount_pct/100)`.
 Line profit  = revenue - `quantity * cost`.
 
-✅ **Did it work?** Numbers to check against: **34** products in `gold_product_performance`,
-**7** account managers in `gold_rep_performance`, and **9** at-risk customers. Total product
-revenue should be **about £871.8k** across 2,200 order lines - lining up with the clean
-tables from Practical 1 (to the penny it depends on where you round, but it lands at
-£871,821). Your top product by revenue should be **Prosecco 750ml x6 (£60,693.48)** and
-your top account manager **Priya Sharma (£207,304.23)**.
+✅ **Did it work?** A good sanity check: your gold per-product revenue should line up with
+what Genie told you from the clean tables in Practical 1. Products and orders should match
+the clean counts once your rules have done their job.
 
-💡 **Spot the subtlety.** Your per-product gold revenue lines up with the clean reference
-(about £871.8k), but your per-*customer* gold revenue comes out lower (**£793,959.93**). Why?
-Silver dropped 6 customers with corrupted region values, and dropping those dimension rows
-orphaned their (perfectly good) **£77,861** of order lines from the customer join. That is
-the classic trade-off between *dropping* a bad row and *quarantining or repairing* it -
-well worth a thought for real pipelines.
+💡 **Spot the subtlety.** Your per-*product* gold totals will match the clean reference, but
+your per-*customer* totals come out a little lower. Why? Silver dropped a few customers whose
+`region` was corrupted, and dropping those dimension rows orphans their (perfectly good) order
+lines from the customer join. That is the classic trade-off between *dropping* a bad row and
+*quarantining or repairing* it - well worth a thought for real pipelines.
 
 ### Bonus (if you finish early)
 
@@ -347,8 +227,8 @@ well worth a thought for real pipelines.
 - **Cross-sell table.** Build a gold table that, for each customer, recommends the most
   popular product in their segment that they have *not* yet bought.
 
-💡 Use Genie Code throughout. The skill being practised is *describing intent and
-reviewing the result*, not memorising APIs.
+💡 Use Genie Code throughout. The skill being practised is *describing intent and reviewing
+the result*, not memorising APIs.
 
 ---
 
@@ -362,19 +242,18 @@ lookups, plus database superpowers like instant branching and point-in-time reco
 The bootstrap built a heavy per-customer table, `gold_customer_scorecard` (rolling 12-month
 revenue, RFM scores, at-risk flag, peer percentile ranks, cross-sell pick). Your facilitator
 has already provisioned the Lakebase project **`workshop-scorecard`** (Postgres 17) and your
-personal Postgres role. In this lab you will sync that scorecard into Postgres and put it to
-work.
+personal Postgres role. In this lab you sync that scorecard into Postgres and put it to work.
 
 **Your Task:** work through the tiers below. Get the must-do done first, then go as far as
 time allows. You will use the database **`databricks_postgres`** throughout.
 
-> _Facilitator note: participants need no admin rights to self-sync. All six grants apply
-> to the `workshop_participants` group **once** (no per-person work): 4 in Unity Catalog
+> _Facilitator note: participants need no admin rights to self-sync. The grants can all be
+> applied to the `workshop_participants` group once (no per-person work): Unity Catalog
 > (USE CATALOG; USE SCHEMA + CREATE TABLE on the participant schemas; USE SCHEMA + SELECT on
-> the source gold table) plus 2 in Lakebase (a Postgres role created with
-> `identity_type=GROUP`, and `CAN_USE` on the `workshop-scorecard` database project). They
-> are scripted in `lakebase/synced_table/facilitator_grants.sh`; run it before the session.
-> `workshop_participants` must be an **account-level** group (Unity Catalog requires that)._
+> the source gold table) plus Lakebase (a Postgres role created with `identity_type=GROUP`,
+> and `CAN_USE` on the `workshop-scorecard` database project). They are scripted in
+> `lakebase/synced_table/facilitator_grants.sh`; run it before the session.
+> `workshop_participants` must be an **account-level** group._
 
 ### Part 1: Sync the scorecard into Lakebase (must-do)
 
@@ -398,19 +277,18 @@ one-line CLI command if you prefer). It lands as `<your_schema>.<your_table>`.
    FROM   shared_data.customer_scorecard_synced   -- or your own <schema>.<table>
    WHERE  customer_id = 42;
    ```
-   You should get back: **42 | The Bell Bistro | North East | National Group | 12701.01 |
-   10417.51 | R2F5M4 | true | Mature Cheddar 5kg**.
-3. Try a few other `customer_id` values (1-70). Each single-row lookup comes back instantly.
+   You get that customer's full scorecard back in a single row - name, region, segment,
+   lifetime and rolling-12-month revenue, RFM cell, at-risk flag and next-best cross-sell.
+3. Try a few other `customer_id` values. Each single-row lookup comes back instantly.
 
 💡 That one row was computed with heavy OLAP (RFM, rolling-12-month, cross-sell affinity),
 but Postgres serves it in **sub-millisecond** time. Run
 `EXPLAIN ANALYZE SELECT * FROM shared_data.customer_scorecard_synced WHERE customer_id = 42;`
-- at this tiny row count (the table is one page) Postgres correctly prefers a `Seq Scan`
-(execution time ~0.2 ms). The primary-key index is what keeps the lookup O(log n) **as the
-table grows**; to see that plan now, run `SET enable_seqscan = off;` first and re-run the
-EXPLAIN to get an `Index Scan using ..._pkey`. Either way this is the OLTP serving pattern:
-precompute the hard stuff in the lakehouse, serve it hot from Lakebase to thousands of
-concurrent app users.
+- at this small row count (the table fits in one page) Postgres sensibly prefers a `Seq Scan`.
+The primary-key index is what keeps the lookup fast **as the table grows**; to see that plan
+now, run `SET enable_seqscan = off;` first and re-run the EXPLAIN to get an `Index Scan`.
+Either way this is the OLTP serving pattern: precompute the hard stuff in the lakehouse, serve
+it hot from Lakebase to thousands of concurrent app users.
 
 💡 Prefer the command line? Connect with `psql` using your Databricks identity as the
 Postgres role and a short-lived token as the password:
@@ -447,7 +325,7 @@ perfect for testing a migration or a risky change safely.
    timestamp:
    ```
    databricks postgres create-branch projects/workshop-scorecard pitr-recover \
-     --json '{"spec":{"source_branch":"projects/workshop-scorecard/branches/production","source_branch_time":"<your-timestamp, e.g. 2026-05-31T20:18:05Z>","ttl":"86400s"}}'
+     --json '{"spec":{"source_branch":"projects/workshop-scorecard/branches/production","source_branch_time":"<your-timestamp>","ttl":"86400s"}}'
    ```
 3. Connect to `pitr-recover` and confirm the rows are back as they were at that instant.
 
@@ -458,23 +336,22 @@ window, served as a fresh branch you can inspect before promoting.
 
 Pick whichever interests you:
 
-- **Read replica** (works today). Add a read-only endpoint and confirm reads succeed but
-  writes are rejected:
+- **Read replica.** Add a read-only endpoint and confirm reads succeed but writes are
+  rejected:
   ```
   databricks postgres create-endpoint projects/workshop-scorecard/branches/production ro-replica \
     --json '{"spec":{"endpoint_type":"ENDPOINT_TYPE_READ_ONLY"}}'
   ```
-- **Scale to zero** (config). Set `suspend_timeout_duration` on an endpoint; compute
-  auto-suspends after idle and wakes on the next connection. Great for cost on bursty apps.
-- **Data API** (enable in the UI). Project → **Data API** page → **Enable**, then hit it
-  over REST - the path an application would actually use:
+- **Scale to zero.** Set `suspend_timeout_duration` on an endpoint; compute auto-suspends
+  after idle and wakes on the next connection. Great for cost on bursty apps.
+- **Data API.** Enable it on the project's **Data API** page, then hit the scorecard over
+  REST - the path an application would actually use:
   ```
   curl -H "Authorization: Bearer $TOKEN" \
     "$REST_ENDPOINT/shared_data/customer_scorecard_synced?customer_id=eq.42"
   ```
-- **CDC back to Delta** (preview). Streaming changes made in Lakebase back into a Delta table
-  in Unity Catalog closes the loop between OLTP and the lakehouse - one to watch as it comes
-  out of preview.
+- **CDC back to Delta.** Streaming changes made in Lakebase back into a Delta table in Unity
+  Catalog closes the loop between OLTP and the lakehouse - one to watch as it matures.
 
 💡 Ask the facilitator which of these are enabled on the day; some are quick to show, others
 are discussion-only.
@@ -485,8 +362,8 @@ are discussion-only.
 
 In one sitting you have:
 
-1. **Asked** your data questions in plain English, taught Genie your business vocabulary,
-   and seen why a governed metric view gives everyone the same number.
+1. **Asked** your data questions in plain English, and seen why governed business context and
+   metric views give everyone the same trustworthy answer.
 2. **Built** a medallion pipeline from raw, messy JSON to trustworthy gold metrics - by
    describing intent to Genie Code, not by memorising Spark.
 3. **Served** heavy analytics as millisecond Postgres lookups with Lakebase, complete with

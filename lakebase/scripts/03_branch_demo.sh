@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Practical 3 — Lakebase  •  Git-style BRANCHING + isolation
+# Practical 3 - Lakebase  •  Git-style BRANCHING + isolation
 # ---------------------------------------------------------------------------
 # A branch is a copy-on-write clone of a branch's data + schema. Create one,
-# change it, and see the parent is untouched — like `git checkout -b`, but for
+# change it, and see the parent is untouched - like `git checkout -b`, but for
 # a live Postgres database. Great for dev/test against production-shaped data
 # with zero copy cost.
 # ---------------------------------------------------------------------------
@@ -23,8 +23,8 @@ DEV_URI="$PGURI"
 source "$(dirname "$0")/01_connect.sh" production
 PROD_URI="$PGURI"
 
-echo "=== Branch is an instant COW clone — already has all rows ==="
-psql "$DEV_URI" -c "SELECT count(*) AS rows_on_branch FROM public.customer_scorecard;"   # tested: 70
+echo "=== Branch is an instant COW clone - already has all rows ==="
+psql "$DEV_URI" -c "SELECT count(*) AS rows_on_branch FROM public.customer_scorecard;"   # expect: 70
 
 echo "=== Mutate ONLY the branch ==="
 psql "$DEV_URI" \
@@ -33,10 +33,10 @@ psql "$DEV_URI" \
   -c "INSERT INTO public.customer_scorecard (customer_id, customer_name, segment, at_risk_flag)
         VALUES (999, 'Branch-only Test Outlet', 'Independent', true);"
 
-echo "=== Branch after edits (tested: 14 rows; cid 42 renamed; cid 999 present) ==="
+echo "=== Branch after edits (expect: fewer rows; cid 42 renamed; cid 999 present) ==="
 psql "$DEV_URI" -c "SELECT count(*) FROM public.customer_scorecard;
                     SELECT customer_id, customer_name FROM public.customer_scorecard WHERE customer_id IN (42,999);"
 
-echo "=== PRODUCTION is UNCHANGED — isolation proven (tested: 70 rows; cid 42 original; no cid 999) ==="
+echo "=== PRODUCTION is UNCHANGED - isolation: original rows; cid 42 original; no cid 999 ==="
 psql "$PROD_URI" -c "SELECT count(*) FROM public.customer_scorecard;
                      SELECT customer_id, customer_name FROM public.customer_scorecard WHERE customer_id IN (42,999);"

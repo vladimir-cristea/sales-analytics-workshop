@@ -1,12 +1,12 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Workshop Bootstrap — Northgate Provisions Co.
+# MAGIC # Workshop Bootstrap - Northgate Provisions Co.
 # MAGIC
 # MAGIC **One action: _Run all_.** This single notebook provisions the entire workshop
 # MAGIC environment and is **idempotent** (safe to re-run).
 # MAGIC
 # MAGIC It will:
-# MAGIC 1. _(optional, documented)_ create a catalog for a customer workspace,
+# MAGIC 1. _(optional, documented)_ create a catalog for your workspace,
 # MAGIC 2. create the `shared_data` schema and a UC volume,
 # MAGIC 3. **copy the committed raw + clean JSON from this imported repo into the volume**
 # MAGIC    (no manual upload),
@@ -23,17 +23,17 @@
 # MAGIC %md
 # MAGIC ## 1. Configuration
 # MAGIC
-# MAGIC Defaults target the build workspace (`vcr_serverless_catalog`). For a customer
-# MAGIC workspace, change `catalog` here (and optionally enable catalog creation below).
+# MAGIC Defaults to the example catalog (`workshop`). For your own workspace,
+# MAGIC change `catalog` here (and optionally enable catalog creation below).
 
 # COMMAND ----------
 
-dbutils.widgets.text("catalog", "vcr_serverless_catalog", "Catalog")
+dbutils.widgets.text("catalog", "workshop", "Catalog")
 dbutils.widgets.text("schema", "shared_data", "Schema")
 dbutils.widgets.text("volume", "data", "Volume")
 dbutils.widgets.text("participants_group", "workshop_participants", "Participant group")
 dbutils.widgets.text("participant_users", "", "Participant users (comma-separated emails; blank = just you)")
-dbutils.widgets.dropdown("create_catalog", "false", ["true", "false"], "Create catalog? (customer workspace only)")
+dbutils.widgets.dropdown("create_catalog", "false", ["true", "false"], "Create catalog? (only if you need a fresh one)")
 dbutils.widgets.text("data_dir", "", "Override repo data dir (blank = auto-detect)")
 
 CATALOG = dbutils.widgets.get("catalog").strip()
@@ -57,10 +57,10 @@ print(f"Create catalog? ...... {CREATE_CATALOG}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2. (Optional) Create the catalog — customer workspace only
+# MAGIC ## 2. (Optional) Create the catalog
 # MAGIC
-# MAGIC On the build workspace we reuse the existing `vcr_serverless_catalog`, so this is
-# MAGIC skipped by default (`create_catalog = false`). On a customer's own workspace, set the
+# MAGIC By default this reuses the existing `workshop`, so it is
+# MAGIC skipped (`create_catalog = false`). To create a fresh catalog on your workspace, set the
 # MAGIC `create_catalog` widget to `true`. A managed catalog needs no storage location on most
 # MAGIC workspaces; if yours requires one, add `MANAGED LOCATION '<s3/abfss path>'`.
 
@@ -88,7 +88,7 @@ print(f"✅ Schema {CATALOG}.{SCHEMA} and volume {VOLUME} ready")
 # MAGIC %md
 # MAGIC ## 4. Copy the committed JSON from the repo into the UC volume
 # MAGIC
-# MAGIC **This is the key simplicity requirement — no manual upload.** We locate the `data/`
+# MAGIC **This is the key simplicity requirement - no manual upload.** We locate the `data/`
 # MAGIC folder inside this imported repo (derived from the notebook's own path) and copy the
 # MAGIC `raw/` and `clean/` JSON into the volume.
 # MAGIC
@@ -123,7 +123,7 @@ def _detect_data_dir():
                 return c
     except Exception as e:
         print(f"(notebook-path detection failed: {e})")
-    raise RuntimeError("Could not locate the repo data/ folder — set the 'data_dir' widget.")
+    raise RuntimeError("Could not locate the repo data/ folder - set the 'data_dir' widget.")
 
 DATA_DIR = _detect_data_dir()
 print(f"Repo data dir: {DATA_DIR}")
@@ -180,7 +180,7 @@ for dst, size in landed:
 # MAGIC %md
 # MAGIC ## 5. Build the CLEAN shared tables
 # MAGIC
-# MAGIC Loaded from the committed `clean/` JSON (guaranteed free of data-quality issues — the
+# MAGIC Loaded from the committed `clean/` JSON (guaranteed free of data-quality issues - the
 # MAGIC dirty `raw/` data is for the SDP lab). These back the Genie practical.
 
 # COMMAND ----------
@@ -259,7 +259,7 @@ print("✅ product_performance_summary, monthly_sales_summary built")
 # MAGIC %md
 # MAGIC ## 7. Build the heavy-OLAP `gold_customer_scorecard`
 # MAGIC
-# MAGIC Pre-computed per-customer analytics keyed by `customer_id` for **point lookup** — the
+# MAGIC Pre-computed per-customer analytics keyed by `customer_id` for **point lookup** - the
 # MAGIC kind of thing you would never run live against an OLTP store. Rolling-12-month
 # MAGIC revenue/profit/margin, RFM scores, an at-risk score, peer percentile ranks, top
 # MAGIC categories and a next-best-SKU cross-sell recommendation. This is the table the
@@ -429,7 +429,7 @@ print("✅ sales_metrics metric view built")
 # MAGIC Each participant gets their own schema (for the SDP lab, where they create their own
 # MAGIC tables) and is granted read access to the shared data via the participant group.
 # MAGIC Group grants are wrapped defensively: if the group does not exist yet, the bootstrap
-# MAGIC reports it rather than failing — create the group and re-run.
+# MAGIC reports it rather than failing - create the group and re-run.
 
 # COMMAND ----------
 
@@ -467,7 +467,7 @@ try:
         spark.sql(g)
     print(f"✅ Granted shared-data + volume read access to group `{PARTICIPANTS_GROUP}`")
 except Exception as e:
-    print(f"⚠️  Group grants skipped — does group `{PARTICIPANTS_GROUP}` exist? "
+    print(f"⚠️  Group grants skipped - does group `{PARTICIPANTS_GROUP}` exist? "
           f"Create it (Settings → Identity and Access → Groups) and re-run. Detail: {str(e)[:160]}")
 
 # COMMAND ----------
@@ -498,7 +498,7 @@ ORDER BY table
 
 # COMMAND ----------
 
-# Metric view check — must be queried with MEASURE() (SELECT * is unsupported).
+# Metric view check - must be queried with MEASURE() (SELECT * is unsupported).
 display(spark.sql(f"""
 SELECT `Segment`,
        ROUND(MEASURE(`Total Revenue`), 2)  AS revenue,

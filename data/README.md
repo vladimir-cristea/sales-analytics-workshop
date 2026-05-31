@@ -1,10 +1,10 @@
-# data/ — Northgate Provisions Co. dataset
+# data/ - Northgate Provisions Co. dataset
 
 Synthetic dataset for the workshop. **Northgate Provisions Co.** is a fictional B2B
 food & beverage wholesaler supplying outlets (pubs, cafés, delis, convenience stores)
 across the UK.
 
-Everything here is produced by one deterministic, dependency-free script —
+Everything here is produced by one deterministic, dependency-free script -
 [`generate_data.py`](generate_data.py) (`RANDOM_SEED = 42`). The generated JSON is
 **committed** so the bootstrap can copy it straight into a Unity Catalog volume with no
 manual upload. Re-running the script is byte-for-byte reproducible.
@@ -17,8 +17,8 @@ python data/generate_data.py     # regenerate (standard library only)
 
 | Folder        | Purpose                                                              | Used by |
 |---------------|----------------------------------------------------------------------|---------|
-| `clean/`      | CLEAN curated data — no data-quality issues.                         | Genie (practical 1), Lakebase fallback, the bootstrap's shared tables. |
-| `raw/`        | RAW DIRTY data — the clean rows **plus** deliberately seeded issues. | The SDP lab (practical 2) ingests this from the volume and cleans it. |
+| `clean/`      | CLEAN curated data - no data-quality issues.                         | Genie (practical 1), Lakebase fallback, the bootstrap's shared tables. |
+| `raw/`        | RAW DIRTY data - the clean rows **plus** deliberately seeded issues. | The SDP lab (practical 2) ingests this from the volume and cleans it. |
 
 Both are **newline-delimited JSON** (one object per line), one file per entity:
 
@@ -40,13 +40,13 @@ data/clean/orders/orders.json            data/raw/orders/orders.json
 
 ## Schema
 
-### customers — the outlets Northgate supplies
+### customers - the outlets Northgate supplies
 
 | Column            | Type    | Notes |
 |-------------------|---------|-------|
 | `customer_id`     | INT     | Primary key. 1–70 in clean data. |
 | `customer_name`   | STRING  | Outlet name, e.g. *"The White Hart Bistro"*. |
-| `region`          | STRING  | UK region — one of: `London`, `South East`, `South West`, `East of England`, `Midlands`, `North West`, `North East`, `Yorkshire`, `Scotland`, `Wales`, `Northern Ireland`. |
+| `region`          | STRING  | UK region - one of: `London`, `South East`, `South West`, `East of England`, `Midlands`, `North West`, `North East`, `Yorkshire`, `Scotland`, `Wales`, `Northern Ireland`. |
 | `segment`         | STRING  | `National Group`, `Regional`, or `Independent`. |
 | `account_manager` | STRING  | Owning Northgate account manager. |
 | `join_date`       | DATE    | When the outlet became a customer (2021–2025). |
@@ -55,7 +55,7 @@ data/clean/orders/orders.json            data/raw/orders/orders.json
 {"customer_id": 1, "customer_name": "The White Hart Bistro", "region": "Midlands", "segment": "National Group", "account_manager": "Tom Whitfield", "join_date": "2022-04-03"}
 ```
 
-### products — the SKUs in the catalogue
+### products - the SKUs in the catalogue
 
 | Column         | Type           | Notes |
 |----------------|----------------|-------|
@@ -70,7 +70,7 @@ data/clean/orders/orders.json            data/raw/orders/orders.json
 {"product_id": "SKU-001", "product_name": "Sparkling Water 330ml x24", "category": "Beverages", "list_price": 8.4, "cost": 5.32, "launch_date": "2023-11-16"}
 ```
 
-### orders — order lines
+### orders - order lines
 
 | Column         | Type           | Notes |
 |----------------|----------------|-------|
@@ -96,7 +96,7 @@ data/clean/orders/orders.json            data/raw/orders/orders.json
 
 ## Seeded data-quality issues (RAW only)
 
-The `clean/` files contain **none** of the below (verified: zero on every check). The
+The `clean/` files contain **none** of the below. The
 `raw/` files are the clean rows plus these deliberately seeded issues. Counts are exact
 and reproducible. The SDP lab's silver layer is expected to drop / quarantine them.
 
@@ -122,7 +122,7 @@ and reproducible. The SDP lab's silver layer is expected to drop / quarantine th
 
 | Issue                       | Count | How it appears |
 |-----------------------------|------:|----------------|
-| Null `product_id`           |     1 | Appended *"Unknown Product"* row (`product_id: null`, `list_price: 0.0`) — mirrors the original WithSecure shape. |
+| Null `product_id`           |     1 | Appended *"Unknown Product"* row (`product_id: null`, `list_price: 0.0`). |
 | `list_price <= 0`           |  **3** | 2 appended *"Discontinued Line"* rows (`SKU-084` = `0.0`, `SKU-085` = `-5.0`) **plus** the *"Unknown Product"* row above (`0.0`). |
 
 > Overlap note: the null-`product_id` row also has `list_price = 0.0`, so a

@@ -3,8 +3,8 @@
 Deterministic generator for the Northgate Provisions Co. workshop dataset.
 
 Northgate Provisions Co. is a fictional B2B food & beverage wholesaler supplying
-outlets across the UK. This script emits THREE entities — customers (outlets),
-products (SKUs) and orders (order lines) — in two flavours:
+outlets across the UK. This script emits THREE entities - customers (outlets),
+products (SKUs) and orders (order lines) - in two flavours:
 
   data/clean/<entity>/<entity>.json   CLEAN curated data (Genie + Lakebase fallback)
   data/raw/<entity>/<entity>.json     RAW DIRTY data (SDP lab source) with seeded
@@ -19,7 +19,7 @@ of seeded issues is known up front. Run it, then read the printed summary; it is
 in data/README.md.
 
 Usage:  python data/generate_data.py
-        (no third-party dependencies — standard library only)
+        (no third-party dependencies - standard library only)
 """
 
 import json
@@ -35,7 +35,7 @@ RANDOM_SEED = 42
 NUM_CUSTOMERS = 70
 NUM_ORDERS = 2200            # clean order lines; dirty file adds the seeded rows on top
 
-# Reference "today" for the dataset — anything dated after this is in the future.
+# Reference "today" for the dataset - anything dated after this is in the future.
 TODAY = date(2026, 5, 31)
 HISTORY_START = date(2025, 1, 1)   # orders span this range up to TODAY (clean data)
 
@@ -58,7 +58,7 @@ ACCOUNT_MANAGERS = [
     "Sophie Laurent", "Marcus Reid", "Yusuf Khan",
 ]
 
-# Outlet name building blocks (synthetic, branding-neutral).
+# Outlet name building blocks (synthetic).
 NAME_PREFIX = [
     "The Crown", "Riverside", "Greenfield", "Oakwood", "Harbour", "Kings Head",
     "The Bell", "Highgate", "Maple", "Station", "The Anchor", "Ashfield",
@@ -204,7 +204,7 @@ def gen_orders(rng, customers, products):
 
 
 # ----------------------------------------------------------------------------
-# Dirty injection — explicit, hand-placed, fully countable
+# Dirty injection - explicit, hand-placed, fully countable
 # ----------------------------------------------------------------------------
 def dirty_customers(rng, clean):
     """Return (rows, issue_counts). Clean rows are preserved; dirty rows appended/mutated."""
@@ -216,12 +216,12 @@ def dirty_customers(rng, clean):
         "null_customer_id": 0,
     }
 
-    # (a) invalid region values — mutate 6 existing rows in place.
+    # (a) invalid region values - mutate 6 existing rows in place.
     for i, cid in enumerate([3, 11, 19, 27, 38, 52]):
         rows[cid - 1]["region"] = INVALID_REGIONS[i % len(INVALID_REGIONS)]
         counts["invalid_region"] += 1
 
-    # (b) segment = 'TEST' — append 4 obvious test outlets.
+    # (b) segment = 'TEST' - append 4 obvious test outlets.
     for n in range(4):
         new_id = NUM_CUSTOMERS + 100 + n
         rows.append({
@@ -234,7 +234,7 @@ def dirty_customers(rng, clean):
         })
         counts["segment_TEST"] += 1
 
-    # (c) customer_name like '%test%' but with a VALID segment — append 5.
+    # (c) customer_name like '%test%' but with a VALID segment - append 5.
     #     (kept separate from the TEST-segment rows so both filters are exercised)
     test_names = [
         "Test Kitchen Ltd", "The Testing Tavern", "Beta Test Bistro",
@@ -252,7 +252,7 @@ def dirty_customers(rng, clean):
         })
         counts["name_like_test"] += 1
 
-    # (d) null customer_id — append 2 rows with a missing key.
+    # (d) null customer_id - append 2 rows with a missing key.
     for n in range(2):
         rows.append({
             "customer_id": None,
@@ -271,7 +271,7 @@ def dirty_products(rng, clean):
     rows = [dict(p) for p in clean]
     counts = {"null_product_id": 0, "nonpositive_list_price": 0}
 
-    # (a) null product_id — one "unknown product" row (mirrors the WithSecure shape).
+    # (a) null product_id - one "unknown product" row.
     rows.append({
         "product_id": None,
         "product_name": "Unknown Product",
@@ -282,7 +282,7 @@ def dirty_products(rng, clean):
     })
     counts["null_product_id"] += 1
 
-    # (b) non-positive list_price — append 2 broken catalogue rows.
+    # (b) non-positive list_price - append 2 broken catalogue rows.
     for n in range(2):
         new_idx = len(PRODUCT_CATALOGUE) + 50 + n
         rows.append({
@@ -327,32 +327,32 @@ def dirty_orders(rng, clean, customers, products):
             "currency": "GBP",
         }
 
-    # (a) duplicate order_ids — re-append 15 EXISTING clean rows verbatim (same order_id).
+    # (a) duplicate order_ids - re-append 15 EXISTING clean rows verbatim (same order_id).
     for o in rng.sample(clean, 15):
         rows.append(dict(o))
         counts["duplicate_order_id"] += 1
 
-    # (b) null customer_id — 8 rows.
+    # (b) null customer_id - 8 rows.
     for _ in range(8):
         r = _template(); r["customer_id"] = None
         rows.append(r); counts["null_customer_id"] += 1
 
-    # (c) null product_id — 7 rows.
+    # (c) null product_id - 7 rows.
     for _ in range(7):
         r = _template(); r["product_id"] = None
         rows.append(r); counts["null_product_id"] += 1
 
-    # (d) non-positive quantity — 12 rows (mix of 0 and negative).
+    # (d) non-positive quantity - 12 rows (mix of 0 and negative).
     for n in range(12):
         r = _template(); r["quantity"] = 0 if n % 2 == 0 else -rng.randint(1, 8)
         rows.append(r); counts["nonpositive_quantity"] += 1
 
-    # (e) discount_pct outside 0-100 — 10 rows (mix of negative and >100).
+    # (e) discount_pct outside 0-100 - 10 rows (mix of negative and >100).
     for n in range(10):
         r = _template(); r["discount_pct"] = -10.0 if n % 2 == 0 else round(rng.uniform(101, 250), 1)
         rows.append(r); counts["discount_out_of_range"] += 1
 
-    # (f) future order_date — 9 rows dated after TODAY.
+    # (f) future order_date - 9 rows dated after TODAY.
     for _ in range(9):
         r = _template()
         r["order_date"] = (TODAY + timedelta(days=rng.randint(15, 400))).isoformat()
@@ -377,7 +377,7 @@ def main():
     _write_ndjson(os.path.join(CLEAN_DIR, "products"), "products.json", products)
     _write_ndjson(os.path.join(CLEAN_DIR, "orders"), "orders.json", orders)
 
-    # Dirty entities (continue drawing from the same rng — still deterministic).
+    # Dirty entities (continue drawing from the same rng - still deterministic).
     d_customers, c_counts = dirty_customers(rng, customers)
     d_products, p_counts = dirty_products(rng, products)
     d_orders, o_counts = dirty_orders(rng, orders, customers, products)
@@ -386,7 +386,7 @@ def main():
     _write_ndjson(os.path.join(RAW_DIR, "products"), "products.json", d_products)
     _write_ndjson(os.path.join(RAW_DIR, "orders"), "orders.json", d_orders)
 
-    # Report — mirror this in data/README.md.
+    # Report - mirror this in data/README.md.
     print("=" * 64)
     print("Northgate Provisions Co. dataset generated (deterministic, seed="
           f"{RANDOM_SEED})")
@@ -399,13 +399,13 @@ def main():
     print(f"  customers : {len(d_customers)}  (+{len(d_customers) - len(customers)} dirty)")
     print(f"  products  : {len(d_products)}  (+{len(d_products) - len(products)} dirty)")
     print(f"  orders    : {len(d_orders)}  (+{len(d_orders) - len(orders)} dirty)")
-    print("\nSeeded DQ issues — customers:")
+    print("\nSeeded DQ issues - customers:")
     for k, v in c_counts.items():
         print(f"  {k:24s}: {v}")
-    print("Seeded DQ issues — products:")
+    print("Seeded DQ issues - products:")
     for k, v in p_counts.items():
         print(f"  {k:24s}: {v}")
-    print("Seeded DQ issues — orders:")
+    print("Seeded DQ issues - orders:")
     for k, v in o_counts.items():
         print(f"  {k:24s}: {v}")
     total = sum(c_counts.values()) + sum(p_counts.values()) + sum(o_counts.values())

@@ -89,7 +89,8 @@ data/clean/orders/orders.json            data/raw/orders/orders.json
 
 > Line revenue = `quantity * unit_price * (1 - discount_pct/100)`.
 > Line profit  = revenue − `quantity * products.cost`.
-> "Today" for the workshop is **2026-05-31**.
+> The dataset's reference "today" (the anchor for recency / rolling-window metrics) is
+> **2026-05-31**.
 
 ---
 

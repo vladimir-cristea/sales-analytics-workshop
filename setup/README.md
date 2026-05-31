@@ -37,7 +37,7 @@ Copying repo files into a UC volume on serverless has historically been flaky. T
 records which succeeded:
 
 1. **FUSE write** — `with open(volume_path, "wb") as f: f.write(bytes)` after reading the
-   source from `/Workspace/...`. ← **this is what worked** on `fevm-vcr-serverless`.
+   source from `/Workspace/...`. ← **this is what worked** on the build workspace.
 2. **`dbutils.fs.cp(f"file:{src}", dst)`** — explicit `file:` scheme. (verified working too)
 3. **SDK Files API** — `WorkspaceClient().files.upload(dst, BytesIO(bytes), overwrite=True)`,
    a REST upload that is FUSE-independent. (verified working too)
@@ -49,7 +49,7 @@ The repo's `data/` folder is located automatically from the notebook's own path
 (`repo_root/data`), so the copy works regardless of who imports the repo or where. An
 explicit `data_dir` widget is available as an override.
 
-## Verified end-to-end (fevm-vcr-serverless, 2026-05-31)
+## Verified end-to-end (build workspace, serverless)
 
 Ran twice from a clean slate (`DROP SCHEMA … CASCADE` first). Both runs green and idempotent:
 
@@ -63,8 +63,8 @@ Ran twice from a clean slate (`DROP SCHEMA … CASCADE` first). Both runs green 
 | gold_customer_scorecard | 70 |
 
 All 6 JSON files landed under `/Volumes/vcr_serverless_catalog/shared_data/data/{raw,clean}/`.
-Per-user schema `ws_vladimir_cristea_databricks_com` created. Group grants are skipped
-gracefully when the `workshop_participants` group does not exist (create it and re-run).
+Per-user scratch schemas created. Group grants are skipped gracefully when the
+`workshop_participants` group does not exist (create it and re-run).
 
 > Lakebase instance provisioning + sync of `gold_customer_scorecard` is handled by the
 > `lakebase` teammate. This bootstrap only guarantees the table exists in UC.

@@ -37,11 +37,10 @@ through the parts below. You are not writing SQL. You are having a conversation.
 are the guided tour; **Part 7 (metric views) is the must-do highlight**, and there is an
 optional Bonus at the end.
 
-> _Facilitator note: this practical uses three Genie spaces - the curated "Sales Analytics"
-> (Parts 1-6), and two A/B spaces "Base Only (no context)" and "Metric View Comparison"
-> (Parts 4 and 7). Their actual titles in the workspace use a long dash between "Northgate
-> Provisions" and the suffix rather than the hyphen shown here (house style), so search by
-> the space name or use the links you share. Have all three open before the session._
+> _Facilitator note: this practical uses three Genie spaces - the curated "Northgate
+> Provisions - Sales Analytics" (Parts 1-6) and two A/B spaces, "Northgate Provisions - Base
+> Only (no context)" and "Northgate Provisions - Metric View Comparison" (Parts 4 and 7).
+> Have all three open before the session._
 
 ### Part 1: Get your bearings
 
@@ -163,11 +162,12 @@ already governed and would not visibly "break".)
 
 1. Open **"Northgate Provisions - Base Only (no context)"** and ask exactly:
    **"active customers (90d) by segment"**.
-2. Genie will typically answer something like **Independent 69, Regional 32, National Group
-   20** - which is *impossible*, because there are only 41 Independent, 17 Regional and 12
-   National Group customers in the whole business. (The exact wrong numbers can shift from
-   run to run; that instability is itself part of the point.) Open the SQL: it summed the
-   monthly active-customer counts, double-counting anyone who ordered in more than one month.
+2. Genie answers **Independent 69, Regional 32, National Group 20** - which is *impossible*,
+   because there are only 41 Independent, 17 Regional and 12 National Group customers in the
+   whole business. Open the SQL: this space has only the pre-aggregated summary tables, no
+   customer-level table, so Genie can only **sum monthly active-customer counts** - it has no
+   way to count distinct customers, and double-counts anyone who ordered in more than one
+   month.
 
 **Step 2 - ask the with-metric space and get the truth.**
 
@@ -182,11 +182,12 @@ already governed and would not visibly "break".)
 month-grain edge effect) rather than 12. The teaching point is identical; the round numbers
 are just cleaner with the short phrasing.
 
-⚠️ Genie's *un-governed* answer is not even stable - phrase the question differently and the
-naive SQL changes again. That unpredictability is itself the argument: when the definition of
-a metric lives in the query, every asker can get a different number. A metric view pins the
-definition in **one** governed place, so `sales_metrics` returns the same answer every time,
-to Genie, to dashboards, to notebooks. In SQL you would pull a measure out with
+⚠️ The deeper problem: with no governed measure, the *definition* of "active customer" lives
+in whatever SQL Genie improvises - and it will even shift with how you phrase the question
+(ask for "distinct" customers and the summary-only space still sums, just over a different
+window). When the definition lives in the query, every asker can get a different number. A
+metric view pins it in **one** governed place, so `sales_metrics` returns the same answer
+every time - to Genie, to dashboards, to notebooks. In SQL you would pull a measure out with
 `MEASURE("Active Customers (90d)")`; Genie does that for you under the hood.
 
 💡 Optional aside - it is not just counts. Ratios are governed too: `Profit Margin %` is

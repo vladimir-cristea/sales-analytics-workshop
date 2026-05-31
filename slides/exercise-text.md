@@ -19,9 +19,10 @@ outlets (pubs, cafes, delis, convenience stores) across the UK.
   Chilled, Frozen, Alcohol. Everything is in GBP. "Today" for this dataset is
   **31 May 2026**.
 
-> _Facilitator note: numbers quoted in the metric-view step are illustrative. Read the
-> exact figures off your own space on the day; the teaching point is that the two answers
-> diverge, not the specific values._
+> _Facilitator note: the figures quoted throughout were tested live on the build workspace
+> with this exact dataset. They should reproduce as-is; if the data is ever regenerated they
+> may shift slightly, so confirm the headline numbers before the session. The teaching points
+> (the ranking flips, the impossible counts, the orphaned facts) hold regardless._
 
 ---
 

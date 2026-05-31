@@ -35,7 +35,7 @@ dbutils.widgets.text("participants_group", "workshop_participants", "Participant
 dbutils.widgets.text("participant_users", "", "Participant users (comma-separated emails; blank = just you)")
 dbutils.widgets.dropdown("create_catalog", "false", ["true", "false"], "Create catalog? (only if you need a fresh one)")
 dbutils.widgets.text("data_dir", "", "Override repo data dir (blank = auto-detect)")
-dbutils.widgets.dropdown("provision_lakebase", "false", ["true", "false"], "Provision Lakebase project + grant group? (Practical 3 setup)")
+dbutils.widgets.dropdown("provision_lakebase", "true", ["true", "false"], "Provision Lakebase project + grant group? (Practical 3 setup; on by default, degrades gracefully)")
 dbutils.widgets.text("lakebase_project", "workshop-scorecard", "Lakebase project name")
 
 CATALOG = dbutils.widgets.get("catalog").strip()
@@ -478,10 +478,14 @@ except Exception as e:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 8b. (Opt-in) Provision the Lakebase project for Practical 3
+# MAGIC ## 8b. Provision the Lakebase project for Practical 3
 # MAGIC
-# MAGIC Set `provision_lakebase = true` to do the **facilitator-only** Lakebase setup. This is
-# MAGIC the only Lakebase action the facilitator takes - it does **not** sync any table.
+# MAGIC Lakebase is a core practical of this workshop, so it is **provisioned by default**
+# MAGIC (`provision_lakebase = true`); set `provision_lakebase = false` to skip the Lakebase lab.
+# MAGIC The whole block **degrades gracefully**: if Lakebase is not enabled on this workspace, or
+# MAGIC you lack permission to create projects, it prints a single warning and the bootstrap
+# MAGIC carries on - the data/UC setup and the Verify section are unaffected. This is the
+# MAGIC **facilitator-only** Lakebase setup - it does **not** sync any table.
 # MAGIC Participants create their own branch and sync the gold table into it themselves
 # MAGIC (that is the teaching moment), so all this step does is:
 # MAGIC
@@ -509,57 +513,67 @@ except Exception as e:
 # COMMAND ----------
 
 if not PROVISION_LAKEBASE:
-    print("⏭️  Skipping Lakebase provisioning (set provision_lakebase=true to enable).")
+    print("⏭️  Skipping Lakebase provisioning (provision_lakebase=false). "
+          "Set provision_lakebase=true to run the Practical 3 setup.")
 else:
-    from databricks.sdk import WorkspaceClient
-
-    w = WorkspaceClient()
-    api = w.api_client
-    proj_path = f"projects/{LAKEBASE_PROJECT}"
-
-    # 1) Get-or-create the project (idempotent). Lakebase Autoscaling lives under the
-    #    /api/2.0/postgres/* surface; create-project takes project_id as a query param.
+    # The ENTIRE Lakebase block is wrapped so that ANY failure (no Lakebase entitlement, no
+    # permission to create projects, API surface unavailable, etc.) prints one clear warning
+    # and CONTINUES. The core data/UC setup and the Verify section must always complete even
+    # if Lakebase provisioning fails entirely. The inner try/excepts below stay as-is for the
+    # finer-grained idempotency / group-grant handling.
     try:
-        existing = api.do("GET", f"/api/2.0/postgres/{proj_path}")
-        print(f"✅ Reusing existing Lakebase project {existing.get('name', proj_path)}")
-    except Exception:
-        api.do("POST", "/api/2.0/postgres/projects",
-               query={"project_id": LAKEBASE_PROJECT},
-               body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
-        print(f"✅ Created Lakebase project {proj_path}")
+        from databricks.sdk import WorkspaceClient
 
-    # 2) Confirm the default database. The project ships with `databricks_postgres`,
-    #    which is sufficient for the synced-table target - nothing to create.
-    print("ℹ️  Default database `databricks_postgres` ships with the project - sufficient, "
-          "no database creation needed.")
+        w = WorkspaceClient()
+        api = w.api_client
+        proj_path = f"projects/{LAKEBASE_PROJECT}"
 
-    # 3) Grant the participant group the permission set needed to branch + sync.
-    try:
-        # (a) ONE group Postgres role on the production branch (COW branches inherit it).
-        #     Use the role API, NOT raw SQL CREATE ROLE (raw SQL leaves NO_LOGIN, OAuth fails).
+        # 1) Get-or-create the project (idempotent). Lakebase Autoscaling lives under the
+        #    /api/2.0/postgres/* surface; create-project takes project_id as a query param.
         try:
-            api.do("POST", f"/api/2.0/postgres/{proj_path}/branches/production/roles",
-                   body={"spec": {"auth_method": "LAKEBASE_OAUTH_V1",
-                                  "identity_type": "GROUP",
-                                  "postgres_role": PARTICIPANTS_GROUP}})
-            print(f"✅ Created group Postgres role `{PARTICIPANTS_GROUP}` on production branch")
-        except Exception as re:
-            # Role already exists -> idempotent no-op.
-            print(f"ℹ️  Group Postgres role already present (or: {str(re)[:120]})")
+            existing = api.do("GET", f"/api/2.0/postgres/{proj_path}")
+            print(f"✅ Reusing existing Lakebase project {existing.get('name', proj_path)}")
+        except Exception:
+            api.do("POST", "/api/2.0/postgres/projects",
+                   query={"project_id": LAKEBASE_PROJECT},
+                   body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
+            print(f"✅ Created Lakebase project {proj_path}")
 
-        # (b) CAN_MANAGE on the project (required for branch creation; CAN_USE is NOT enough).
-        #     PATCH merges into the existing ACL rather than replacing it.
-        api.do("PATCH", f"/api/2.0/permissions/database-projects/{LAKEBASE_PROJECT}",
-               body={"access_control_list": [
-                   {"group_name": PARTICIPANTS_GROUP, "permission_level": "CAN_MANAGE"}]})
-        print(f"✅ Granted CAN_MANAGE on project to group `{PARTICIPANTS_GROUP}` "
-              f"(enables each participant to create their own branch)")
+        # 2) Confirm the default database. The project ships with `databricks_postgres`,
+        #    which is sufficient for the synced-table target - nothing to create.
+        print("ℹ️  Default database `databricks_postgres` ships with the project - sufficient, "
+              "no database creation needed.")
+
+        # 3) Grant the participant group the permission set needed to branch + sync.
+        try:
+            # (a) ONE group Postgres role on the production branch (COW branches inherit it).
+            #     Use the role API, NOT raw SQL CREATE ROLE (raw SQL leaves NO_LOGIN, OAuth fails).
+            try:
+                api.do("POST", f"/api/2.0/postgres/{proj_path}/branches/production/roles",
+                       body={"spec": {"auth_method": "LAKEBASE_OAUTH_V1",
+                                      "identity_type": "GROUP",
+                                      "postgres_role": PARTICIPANTS_GROUP}})
+                print(f"✅ Created group Postgres role `{PARTICIPANTS_GROUP}` on production branch")
+            except Exception as re:
+                # Role already exists -> idempotent no-op.
+                print(f"ℹ️  Group Postgres role already present (or: {str(re)[:120]})")
+
+            # (b) CAN_MANAGE on the project (required for branch creation; CAN_USE is NOT enough).
+            #     PATCH merges into the existing ACL rather than replacing it.
+            api.do("PATCH", f"/api/2.0/permissions/database-projects/{LAKEBASE_PROJECT}",
+                   body={"access_control_list": [
+                       {"group_name": PARTICIPANTS_GROUP, "permission_level": "CAN_MANAGE"}]})
+            print(f"✅ Granted CAN_MANAGE on project to group `{PARTICIPANTS_GROUP}` "
+                  f"(enables each participant to create their own branch)")
+        except Exception as e:
+            print(f"⚠️  Lakebase group grants skipped - does account-level group "
+                  f"`{PARTICIPANTS_GROUP}` exist? Detail: {str(e)[:180]}")
+
+        print("🟢 Lakebase facilitator setup done. Participants now create their own branch + sync "
+              "(see lakebase/README.md). The bootstrap does NOT sync any table.")
     except Exception as e:
-        print(f"⚠️  Lakebase group grants skipped - does account-level group "
-              f"`{PARTICIPANTS_GROUP}` exist? Detail: {str(e)[:180]}")
-
-    print("🟢 Lakebase facilitator setup done. Participants now create their own branch + sync "
-          "(see lakebase/README.md). The bootstrap does NOT sync any table.")
+        print(f"⚠️  Lakebase provisioning skipped/failed: {str(e)[:200]}; the data setup is "
+              f"unaffected - set up Lakebase manually if needed (see lakebase/README.md).")
 
 # COMMAND ----------
 

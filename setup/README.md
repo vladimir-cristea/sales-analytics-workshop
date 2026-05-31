@@ -17,11 +17,13 @@ into the UC volume by the notebook itself, so there is no manual upload.
 7. Build `gold_customer_scorecard`, the heavy-OLAP point-lookup table keyed by `customer_id`.
 8. Build the governed `sales_metrics` metric view (queried with `MEASURE(...)`).
 9. Create one `ws_<user>` scratch schema per participant and grant the group read access.
-9b. (Opt-in) Provision Lakebase for Practical 3: set `provision_lakebase=true` to
-   get-or-create the Lakebase Autoscaling project, confirm its default `databricks_postgres`
-   database, and grant the `workshop_participants` group the branch-and-sync permission set
-   (group Postgres role + `CAN_MANAGE` on the project). It does **not** sync any table -
-   participants do that themselves. Idempotent; defaults off.
+9b. Provision Lakebase for Practical 3 (provisioned by default; set `provision_lakebase=false`
+   to skip): get-or-create the Lakebase Autoscaling project, confirm its default
+   `databricks_postgres` database, and grant the `workshop_participants` group the
+   branch-and-sync permission set (group Postgres role + `CAN_MANAGE` on the project). It does
+   **not** sync any table - participants do that themselves. Idempotent, and degrades
+   gracefully: if Lakebase is not enabled on this workspace (or you cannot create projects),
+   the step prints one warning and the bootstrap carries on to Verify.
 10. Verify: print volume files and row counts.
 
 Group grants (both the section-8 UC grants and the section-9b Lakebase grants) are skipped

@@ -33,7 +33,9 @@ team. You are the new analyst at Northgate Provisions and your job is to underst
 business by simply asking.
 
 **Your Task:** open the **"Northgate Provisions - Sales Analytics"** Genie space and work
-through the parts below. You are not writing SQL. You are having a conversation.
+through the parts below. You are not writing SQL. You are having a conversation. Parts 1 to 6
+are the guided tour; **Part 7 (metric views) is the must-do highlight**, and there is an
+optional Bonus at the end.
 
 ### Part 1: Get your bearings
 
@@ -55,7 +57,7 @@ are shown so you can sanity-check yours.
 2. **"Which customers are at risk of churning?"** (4 outlets that have gone quiet: The
    Anchor Eatery, Market Square Bistro, Ashfield Deli, Station Grill.)
 3. **"Which outlets are discount-heavy buyers?"** (9 outlets averaging 11.5%+ discount,
-   led by Royal Oak Diner at 12.5%.)
+   led by The Royal Oak Diner at 12.5%.)
 4. **"Who are our key accounts?"** (19 of them: National Group outlets plus anyone in the
    top 10% by revenue.)
 5. **"How has total sales revenue trended over the last 12 months?"** (Rising into the
@@ -82,10 +84,10 @@ Out of the box Genie knows your tables. It does not know what *your team means* 
 like "at-risk", or quirks like "discount is stored as a percentage". You can teach it, and
 the difference is dramatic.
 
-1. **See it get things wrong first.** Open the space's **Instructions / Knowledge**
-   settings and temporarily remove (or note the absence of) the business context. Now ask
-   **"Which customers are at risk of churning?"** With no definition of "at-risk", Genie
-   returns nothing useful (0 rows).
+1. **See it get things wrong first.** Your facilitator will show this on a copy of the
+   space with the business context stripped out (so a dozen people are not editing one
+   space at once). With no definition of "at-risk", asking **"Which customers are at risk of
+   churning?"** returns nothing useful (0 rows).
 2. **Teach it a definition.** Add: *"An at-risk customer has not ordered in the last 45
    days."* Add a synonym so "outlet" and "venue" both mean a customer. Re-ask the same
    question - now you get the 4 quiet outlets. The definition lives in the semantic layer,
@@ -102,8 +104,9 @@ why a curated Genie space beats a raw one.
 definitions, synonyms, expression rules and sample questions that encode how your business
 actually talks.
 
-⚠️ If everyone is sharing one space, treat the "remove context, see it break, add it back"
-steps as a facilitator-led demo rather than 12 people editing the same instructions at once.
+⚠️ If everyone is sharing one space, treat all the editing here (adding definitions,
+synonyms and expression rules) as a facilitator-led demo rather than a dozen people editing
+the same instructions at once. If you each have your own copy of the space, do it yourself.
 
 ### Part 5: Agent mode - let Genie reason in steps
 
@@ -217,7 +220,8 @@ The raw, deliberately dirty JSON is in a volume:
 ```
 
 Build your pipeline **into your own schema** (`ws_<your-name>`) so you do not clash with
-anyone else.
+anyone else. All three layers - bronze, silver and gold - are core; build all three. The
+**Bonus** at the end is optional.
 
 💡 You are not expected to remember Spark syntax. Open **Genie Code** (the button in the
 workspace top nav - "Run multi-step data and AI tasks") and describe what you want in
@@ -266,7 +270,7 @@ yet). Enforce these data-quality rules - drop or quarantine anything that fails:
 **orders**
 - Drop rows with a null `order_id`, `customer_id` or `product_id`.
 - Drop `quantity <= 0`.
-- Drop `discount_pct` outside 0–100.
+- Drop `discount_pct` outside 0-100.
 - Drop future orders (`order_date` after today).
 - **De-duplicate** on `order_id` (the raw data has exact duplicate order lines).
 
@@ -281,8 +285,11 @@ needs a window function over the whole table, which a streaming query cannot do.
 `silver_orders` is best built as a **materialized view**. If Genie Code's first attempt
 errors on the de-dup, that is why - ask it to make that table a materialized view.
 
-You should end up with roughly **64 customers, 34 products, 2,200 orders** in silver -
-exactly the clean reference counts, which is the sign your rules caught all the dirt.
+You should end up with roughly **64 customers, 34 products and 2,200 orders** in silver.
+Products and orders match the clean reference exactly (34 and 2,200). Customers come out
+**6 lower** than the 70 clean customers, because 6 rows had corrupted regions and were
+dropped - you will see why that matters in Part 3. (So do not be alarmed that
+`SELECT COUNT(*)` on the clean `customers` table shows 70: silver is meant to be lower.)
 
 ⚠️ Resist the urge to join here. Silver stays one-table-per-entity. Joining is gold's job
 - it keeps each layer single-purpose and easy to debug.
@@ -302,7 +309,9 @@ tables are usually best as **materialized views**. Build:
   value, number of customers.
 - **`gold_at_risk_customers`** - customers with no order in the last 30 days (against the
   dataset's "today" of 2026-05-31). Outlets reorder roughly fortnightly, so 30 days is
-  more than twice their normal cadence - a fair "gone quiet" signal.
+  more than twice their normal cadence - a fair "gone quiet" signal. (This is a stricter
+  30-day window than Practical 1's 45-day churn definition, so you will get **9** here, not
+  the 4 from Genie - same idea, different threshold.)
 
 Line revenue = `quantity * unit_price * (1 - discount_pct/100)`.
 Line profit  = revenue - `quantity * cost`.
@@ -312,7 +321,7 @@ Line profit  = revenue - `quantity * cost`.
 revenue should be **about £871.8k** across 2,200 order lines - lining up with the clean
 tables from Practical 1 (to the penny it depends on where you round, but it lands at
 £871,821). Your top product by revenue should be **Prosecco 750ml x6 (£60,693.48)** and
-your top account manager **Aisha Bello (£66,573.98)**.
+your top account manager **Priya Sharma (£207,304.15)**.
 
 💡 **Spot the subtlety.** Your per-product gold revenue lines up with the clean reference
 (about £871.8k), but your per-*customer* gold revenue comes out lower (**£793,959.93**). Why?

@@ -263,12 +263,13 @@ Line profit  = revenue - `quantity * cost`.
 
 ✅ **Did it work?** Numbers to check against: **34** products in `gold_product_performance`,
 **7** account managers in `gold_rep_performance`, and **9** at-risk customers. Total product
-revenue should be **£871,821.82** across 2,200 order lines - matching the clean tables from
-Practical 1. Your top product by revenue should be **Prosecco 750ml x6 (£60,693.48)** and
+revenue should be **about £871.8k** across 2,200 order lines - lining up with the clean
+tables from Practical 1 (to the penny it depends on where you round, but it lands at
+£871,821). Your top product by revenue should be **Prosecco 750ml x6 (£60,693.48)** and
 your top account manager **Aisha Bello (£66,573.98)**.
 
-💡 **Spot the subtlety.** Your per-product gold revenue matches the clean reference exactly
-(£871,821.82), but your per-*customer* gold revenue comes out lower (**£793,959.93**). Why?
+💡 **Spot the subtlety.** Your per-product gold revenue lines up with the clean reference
+(about £871.8k), but your per-*customer* gold revenue comes out lower (**£793,959.93**). Why?
 Silver dropped 6 customers with corrupted region values, and dropping those dimension rows
 orphaned their (perfectly good) **£77,861** of order lines from the customer join. That is
 the classic trade-off between *dropping* a bad row and *quarantining or repairing* it -

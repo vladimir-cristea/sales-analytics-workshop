@@ -32,9 +32,9 @@ Gotchas when editing the JSON: tables must be **sorted by identifier**, `column_
 
 | Space | Sources | Use |
 |-------|---------|-----|
-| **Northgate Provisions — Sales Analytics** | 5 clean tables: `customers`, `products`, `orders`, `product_performance_summary`, `monthly_sales_summary` | The main workshop space (Parts 1–6). Curated with business context. |
-| **Northgate Provisions — Base Only (no context)** | Summary tables only: `monthly_sales_summary`, `product_performance_summary`, `products` | **WITHOUT** arm of the metric-view A/B (naive Genie, no distinct-count path). |
-| **Northgate Provisions — Metric View Comparison** | `sales_metrics` (governed metric view) **only** | **WITH** arm of the A/B (Part 7). |
+| **Northgate Provisions - Sales Analytics** | 5 clean tables: `customers`, `products`, `orders`, `product_performance_summary`, `monthly_sales_summary` | The main workshop space (Parts 1–6). Curated with business context. |
+| **Northgate Provisions - Base Only (no context)** | Summary tables only: `monthly_sales_summary`, `product_performance_summary`, `products` | **WITHOUT** arm of the metric-view A/B (naive Genie, no distinct-count path). |
+| **Northgate Provisions - Metric View Comparison** | `sales_metrics` (governed metric view) **only** | **WITH** arm of the A/B (Part 7). |
 
 > `gold_customer_scorecard` is intentionally **not** in any space — that table belongs to
 > the Lakebase practical.
@@ -189,7 +189,7 @@ natively via `MEASURE()`. WITHOUT it, naive NL→SQL **double-counts** a pre-agg
 
 | Surface | Who | Exact navigation |
 |---------|-----|------------------|
-| **Genie space (builder)** | Builders / analysts | Workspace left nav → **Genie Spaces** → open *Northgate Provisions — Sales Analytics*. URL `/genie/rooms/01f15d2bcc96149bbe3494375ce128a2`. Full chrome: **Configure / Monitor / Benchmark** tabs, Agent\|Chat toggle, Share. |
+| **Genie space (builder)** | Builders / analysts | Workspace left nav → **Genie Spaces** → open *Northgate Provisions - Sales Analytics*. URL `/genie/rooms/01f15d2bcc96149bbe3494375ce128a2`. Full chrome: **Configure / Monitor / Benchmark** tabs, Agent\|Chat toggle, Share. |
 | **Genie in Databricks One** | Business users | Top nav → **Switch apps** (grid icon) → **Genie — Business insights from data and AI** → lands on **Databricks One** (`/one`): *"What would you like to know?"* ask box + Home / Dashboards / Genie Spaces / Apps rail. Click the space card → opens `/genie/rooms/<id>?isDbOne=true` with simplified business chrome (no SQL editor). |
 
 > Both surfaces query the *same* space and the *same* governed tables/metric view — same space, two

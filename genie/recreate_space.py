@@ -32,8 +32,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 WAREHOUSE_ID = os.environ.get("GENIE_WAREHOUSE_ID")  # auto-detected if omitted via MCP
 
 SPACES = [
-    ("space_definition.json",            "Northgate Provisions — Sales Analytics"),
-    ("comparison_space_definition.json", "Northgate Provisions — Metric View Comparison"),
+    ("space_definition.json",            "Northgate Provisions - Sales Analytics"),
+    ("comparison_space_definition.json", "Northgate Provisions - Metric View Comparison"),
 ]
 
 

@@ -12,11 +12,17 @@ Everything here was **built and tested live** against
 | File | Purpose |
 |------|---------|
 | `space_definition.json` | Full serialized definition of the curated space (5 tables + instructions, joins, measures, synonyms, 6 certified SQLs). Reproducible. |
-| `comparison_space_definition.json` | Same 5 tables **+ the `sales_metrics` metric view**, no instructions — the **WITH** arm of the metric-view A/B. |
-| `base_only_space_definition.json` | The 5 base tables, no instructions, no metric view — the **WITHOUT** arm of the A/B (naive Genie). |
+| `base_only_space_definition.json` | **WITHOUT** arm: pre-aggregated SUMMARY tables only (`monthly_sales_summary`, `product_performance_summary`, `products`) — no `orders`/`customers`, no metric view. |
+| `comparison_space_definition.json` | **WITH** arm: the governed `sales_metrics` metric view **only**. |
 | `recreate_space.py` | Reference script to rebuild the spaces from the JSON. |
 
-The WITHOUT/WITH pair (`base_only` vs `comparison`) differ by **exactly one thing — the metric view** — so any divergence is attributable to it alone.
+**Why these exact source sets (important — this is what makes the demo reproducible):** the
+WITHOUT space deliberately has **no row-level table** (no `orders`/`customers`), so Genie has
+**no `COUNT(DISTINCT)` path** and is forced down the naive `SUM(monthly_sales_summary.active_customers)`
+route → the impossible overcount. The WITH space has **only** the metric view, so Genie **must** use
+`MEASURE()` → the governed answer. (An earlier design that left `orders`+`customers` in the WITHOUT
+space did **not** reproduce: Genie just counted distinct off `orders` and got the right answer,
+collapsing the contrast. Thanks QA.)
 
 Recreate via MCP (preferred): `manage_genie(action="create_or_update", serialized_space=<file contents>)`.
 Gotchas when editing the JSON: tables must be **sorted by identifier**, `column_configs`
@@ -26,9 +32,9 @@ Gotchas when editing the JSON: tables must be **sorted by identifier**, `column_
 
 | Space | Sources | Use |
 |-------|---------|-----|
-| **Northgate Provisions — Sales Analytics** | 5 clean tables: `customers`, `products`, `orders`, `product_performance_summary`, `monthly_sales_summary` | The main workshop space. Curated with business context. |
-| **Northgate Provisions — Base Only (no context)** | Same 5 tables, no instructions, no metric view | **WITHOUT** arm of the metric-view A/B (naive Genie). |
-| **Northgate Provisions — Metric View Comparison** | Same 5 tables **+ `sales_metrics`** (governed metric view), no instructions | **WITH** arm of the A/B (Practical step 4). |
+| **Northgate Provisions — Sales Analytics** | 5 clean tables: `customers`, `products`, `orders`, `product_performance_summary`, `monthly_sales_summary` | The main workshop space (Parts 1–6). Curated with business context. |
+| **Northgate Provisions — Base Only (no context)** | Summary tables only: `monthly_sales_summary`, `product_performance_summary`, `products` | **WITHOUT** arm of the metric-view A/B (naive Genie, no distinct-count path). |
+| **Northgate Provisions — Metric View Comparison** | `sales_metrics` (governed metric view) **only** | **WITH** arm of the A/B (Part 7). |
 
 > `gold_customer_scorecard` is intentionally **not** in any space — that table belongs to
 > the Lakebase practical.
@@ -90,14 +96,18 @@ the most customers there so they can push those categories?"*
 
 ## Metric-view comparison (step 4) — WITH vs WITHOUT `sales_metrics`
 
-Two metrics were tested live on the controlled pair (Base Only vs Metric View Comparison —
-identical except for the metric view). Both diverge; **#1 is the headline** (the naive answer
-is provably impossible), **#2 is the business-conclusion flip**.
+Tested live on the controlled pair (Base Only = summary tables only; Metric View Comparison =
+metric view only). **#1 is the headline** (the naive answer is provably impossible). #2 (margin
+flip) is included as a concept but is **model-dependent** — see the note at the end.
+
+> Re-tested 2026-05-31 after the QA finding: with the WITHOUT space carrying **no** `orders`/`customers`,
+> the overcount now reproduces **deterministically** (verified via the Conversation API; structurally
+> forced, so UI behaves identically — QA to re-confirm in the Agent-mode UI).
 
 ### #1 (HEADLINE) — "How many active customers in the last 90 days, by segment?"
-Same prompt both spaces.
+Same prompt on both spaces.
 
-**WITHOUT** the metric view — Genie reaches for `monthly_sales_summary.active_customers` and **SUMs** it across months:
+**WITHOUT** the metric view (summary tables only) — Genie's only path is `monthly_sales_summary.active_customers`, which it **SUMs** across months:
 ```sql
 SELECT segment, SUM(active_customers) AS active_customers_last_90_days
 FROM monthly_sales_summary
@@ -127,33 +137,33 @@ GROUP BY ALL ORDER BY 2 DESC
 
 Correct distinct counts (`Active Customers (90d)` = `COUNT(DISTINCT customer_id) FILTER (WHERE order_date >= current_date()-90)`), matched against direct SQL.
 
-### #2 — "What is the average profit margin by segment?"
-Ground-truth governed answer (ratio-of-sums): Independent 20.66%, Regional 20.52%, National Group 20.18%.
+> **Prompt note:** the exact wording *"active customers (90d) by segment"* returns the clean **41 / 17 / 12**
+> (the measure self-windows). The phrasing *"…in the last 90 days…"* makes Genie add a redundant
+> `Order Month` window filter on top of the measure; because `Order Month` is month-truncated, one
+> National Group customer (only recent order in early March) falls outside the window → **11** instead of 12.
+> Either way the WITH answer is ~correct and nowhere near the naive 69/32/20. Recommend the slide use
+> *"active customers (90d) by segment"* for a clean 41/17/12.
 
-**WITHOUT** (base tables, naive `AVG(profit_margin_pct)` = average of per-product ratios):
+### #2 (secondary, MODEL-DEPENDENT) — "What is the average profit margin by segment?"
+Ground-truth governed (ratio-of-sums): Independent 20.66%, Regional 20.52%, National Group 20.18%.
+The **governed/WITH** answer is reliable (metric view → `MEASURE()`). The **naive/WITHOUT** answer is
+**not deterministic** and is **not** reproduced on the summary-only Base Only space (which has no
+per-product-ratio × segment join path). It was observed once on the original all-tables bare space,
+where Genie joined `product_performance_summary` to `customers` and did `AVG(profit_margin_pct)`:
 
-| Segment | margin % |
-|---|---|
-| **National Group** | **20.70** ← looks most profitable |
-| Regional | 20.42 |
-| Independent | 20.32 |
+| Segment | naive avg-of-ratios (observed once) | governed ratio-of-sums (reliable) |
+|---|---|---|
+| National Group | 20.70 ← *looks* best | **20.18 ← actually worst** |
+| Regional | 20.42 | 20.52 |
+| Independent | 20.32 | **20.66 ← actually best** |
 
-**WITH** `sales_metrics` (`try_divide(100*MEASURE(Total Profit), MEASURE(Total Revenue))` = ratio of sums):
-
-| Segment | margin % |
-|---|---|
-| **Independent** | **20.66** ← actually most profitable |
-| Regional | 20.52 |
-| National Group | 20.18 ← actually **least** profitable |
-
-The **ranking flips**: naive avg-of-ratios makes National Group look best; the governed view shows
-it is the **worst**. A wholesaler acting on the naive number would chase the wrong segment. (Absolute
-gap is small because the data is homogeneous — the *flip* is the teaching point.)
+When it does occur the **ranking flips** (NG best→worst) — a nice "even subtle ratios bite" point —
+but treat it as an *optional* illustration, not the guaranteed live beat. **#1 is the reliable headline.**
 
 ### Why it matters
-A metric view is one governed definition reused identically by Genie, dashboards and SQL, and Genie
-consumes it natively via `MEASURE()`. WITHOUT it, naive NL→SQL either **double-counts** (#1) or
-**averages ratios** (#2) — and in #1 the error is large enough to be obviously wrong.
+A metric view is one governed definition reused identically by Genie, dashboards and SQL, consumed
+natively via `MEASURE()`. WITHOUT it, naive NL→SQL **double-counts** a pre-aggregated distinct measure
+(#1) — and the error is large enough (69 > 41 customers that exist) to be **obviously, demonstrably wrong**.
 
 > Nuance: with strong written instructions Genie *can* get the base-table calc right too, but that
 > depends on prompt phrasing and model choice. The metric view makes it **deterministic and governed**,

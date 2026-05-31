@@ -2,11 +2,6 @@
   "version": 2,
   "data_sources": {
     "tables": [
-      { "identifier": "vcr_serverless_catalog.shared_data.customers" },
-      { "identifier": "vcr_serverless_catalog.shared_data.monthly_sales_summary" },
-      { "identifier": "vcr_serverless_catalog.shared_data.orders" },
-      { "identifier": "vcr_serverless_catalog.shared_data.product_performance_summary" },
-      { "identifier": "vcr_serverless_catalog.shared_data.products" },
       { "identifier": "vcr_serverless_catalog.shared_data.sales_metrics" }
     ]
   }

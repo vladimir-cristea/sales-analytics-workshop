@@ -163,10 +163,11 @@ already governed and would not visibly "break".)
 
 1. Open **"Northgate Provisions - Base Only (no context)"** and ask exactly:
    **"active customers (90d) by segment"**.
-2. Genie answers **Independent 69, Regional 32, National Group 20**. That is *impossible* -
-   there are only 41 Independent, 17 Regional and 12 National Group customers in the whole
-   business. Open the SQL: it summed the monthly active-customer counts, double-counting
-   anyone who ordered in more than one month.
+2. Genie will typically answer something like **Independent 69, Regional 32, National Group
+   20** - which is *impossible*, because there are only 41 Independent, 17 Regional and 12
+   National Group customers in the whole business. (The exact wrong numbers can shift from
+   run to run; that instability is itself part of the point.) Open the SQL: it summed the
+   monthly active-customer counts, double-counting anyone who ordered in more than one month.
 
 **Step 2 - ask the with-metric space and get the truth.**
 

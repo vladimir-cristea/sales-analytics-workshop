@@ -3,6 +3,7 @@
 # ──────────────────────────────────────────────────────────────
 .databrickscfg
 .databricks/
+.databricks-resources.json
 .env
 .env.*
 *.token

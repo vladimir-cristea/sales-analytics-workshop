@@ -31,15 +31,14 @@ Genie lets anyone query data in plain English. No SQL, no BI tool, no waiting on
 team. You are the new analyst at Northgate Provisions and your job is to understand the
 business by simply asking.
 
-**Your Task:** open the **Northgate Provisions** Genie space and work through the parts
-below. You are not writing SQL. You are having a conversation.
+**Your Task:** open the **"Northgate Provisions - Sales Analytics"** Genie space and work
+through the parts below. You are not writing SQL. You are having a conversation.
 
 ### Part 1: Get your bearings
 
 1. Open the Genie space and read the suggested questions it offers.
 2. Ask: **"How many customers, products and orders do we have?"**
-3. Ask: **"Which are our top 10 customers by total revenue?"**
-4. Click into one answer and open the SQL Genie generated. You did not write it, but it
+3. Click into the answer and open the SQL Genie generated. You did not write it, but it
    is right there if you want to check the working.
 
 💡 Every answer is backed by real, governed SQL over Unity Catalog tables. Genie is not
@@ -47,13 +46,21 @@ guessing; it is generating queries you could have written yourself.
 
 ### Part 2: Answer real business questions
 
-Ask these one at a time. Read each answer before moving on.
+Ask these one at a time. Read each answer before moving on. Sample answers from the dataset
+are shown so you can sanity-check yours.
 
-1. **Which region brings in the most revenue?**
-2. **Who are our most at-risk customers?** (ones whose ordering has dropped off)
-3. **Which products are discounted the most heavily?**
-4. **How has revenue trended month over month over the last year?**
-5. **Which account managers look after the most valuable customers?**
+1. **"Who are our top 10 customers by revenue?"** (Willow Eatery tops it at ~£21,818,
+   then Bridge Street Bistro ~£19,423.)
+2. **"Which customers are at risk of churning?"** (4 outlets that have gone quiet: The
+   Anchor Eatery, Market Square Bistro, Ashfield Deli, Station Grill.)
+3. **"Which outlets are discount-heavy buyers?"** (9 outlets averaging 11.5%+ discount,
+   led by Royal Oak Diner at 12.5%.)
+4. **"Who are our key accounts?"** (19 of them: National Group outlets plus anyone in the
+   top 10% by revenue.)
+5. **"How has total sales revenue trended over the last 12 months?"** (Rising into the
+   recent quarter, from a ~£35k low to a ~£61k high.)
+6. **"Which customers are underperforming?"** (The bottom revenue quartile within each
+   segment.)
 
 💡 Use the AI Assistant or the "Explain" option if an answer surprises you. Ask Genie a
 follow-up like "why?" or "show me the breakdown" and it keeps the context.
@@ -71,16 +78,31 @@ Notice you never repeated the region. That is conversational analytics.
 ### Part 4: Teach Genie your business (business context)
 
 Out of the box Genie knows your tables. It does not know what *your team means* by a word
-like "at-risk". You can teach it.
+like "at-risk", or quirks like "discount is stored as a percentage". You can teach it, and
+the difference is dramatic.
 
-1. Open the space's **Instructions / Knowledge** settings.
-2. Add a definition, for example: *"An at-risk customer has not ordered in the last 90
-   days."* Add a synonym so "outlet" and "venue" both mean a customer.
-3. Re-ask **"Who are our at-risk customers?"** and confirm the answer now follows your
-   definition.
+1. **See it get things wrong first.** Open the space's **Instructions / Knowledge**
+   settings and temporarily remove (or note the absence of) the business context. Now ask
+   **"Which customers are at risk of churning?"** With no definition of "at-risk", Genie
+   returns nothing useful (0 rows).
+2. **Teach it a definition.** Add: *"An at-risk customer has not ordered in the last 45
+   days."* Add a synonym so "outlet" and "venue" both mean a customer. Re-ask the same
+   question - now you get the 4 quiet outlets. The definition lives in the semantic layer,
+   not in each person's head.
+3. **Repeat with an expression rule.** Add the rule that revenue must apply the discount as
+   `discount_pct / 100`, then re-ask **"Who are our top 10 customers by revenue?"**
+
+⚠️ Why step 3 matters: without that rule Genie reads `discount_pct = 20` as "subtract 20",
+not "subtract 20%", and every revenue figure comes back **negative**. One line of business
+context turns nonsense into the correct ranking. This is the single best illustration of
+why a curated Genie space beats a raw one.
 
 💡 This is how a Genie space goes from "clever demo" to "trusted internal tool": curated
-definitions, synonyms and sample questions that encode how your business actually talks.
+definitions, synonyms, expression rules and sample questions that encode how your business
+actually talks.
+
+⚠️ If everyone is sharing one space, treat the "remove context, see it break, add it back"
+steps as a facilitator-led demo rather than 12 people editing the same instructions at once.
 
 ### Part 5: Agent mode - let Genie reason in steps
 
@@ -90,12 +112,15 @@ steps.
 
 1. Make sure the space is in **Agent mode**.
 2. Ask a multi-step question, for example:
-   **"Which product categories are growing fastest in Scotland, and which account
-   managers should push them?"**
+   **"Which product categories are growing fastest in Scotland, and which account managers
+   cover the most customers there so they can push those categories?"**
 3. Watch it break the problem down, run more than one query, and synthesise an answer.
+   Expect something like: *Frozen is growing fastest (+85%), then Alcohol (+26%); Priya
+   Sharma covers the most Scottish outlets, so she should lead the push.*
 
 💡 Notice the difference from Part 2: this question cannot be answered by a single
-`GROUP BY`. Agent mode is doing analyst-style reasoning, not just translation.
+`GROUP BY`. It needs a growth analysis, a coverage analysis, and then a recommendation that
+ties them together. Agent mode is doing analyst-style reasoning, not just translation.
 
 ### Part 6: The two front doors to Genie
 
@@ -114,8 +139,8 @@ This is the most important part of the practical. We are going to see *why* gove
 metrics matter.
 
 1. **Ask without the metric view first.** In the space (sources = the base tables only),
-   ask: **"What is our average profit margin by segment?"**
-   Note the numbers Genie returns for National Group, Regional and Independent.
+   ask: **"What is our average profit margin by segment?"** Genie's naive answer makes
+   **National Group look the most profitable, at about 20.70%**. Note the ranking.
 2. **Look at how Genie computed it.** Open the SQL. It almost certainly averaged the
    per-line margin percentages: `AVG(margin_pct)`. That is an *average of ratios* - every
    order line counts equally, whether it sold one case or a thousand.
@@ -127,10 +152,12 @@ metrics matter.
 4. **Re-ask the exact same question:** **"What is our average profit margin by segment?"**
    This time Genie uses the metric view's governed definition of `Profit Margin %` -
    `SUM(profit) / SUM(revenue)`, a *ratio of sums*, weighted by actual money. You should
-   see roughly **Independent 20.66%, Regional 20.52%, National Group 20.18%**.
-5. **Compare the two answers.** They are different. The first is a naive average that a
-   few tiny orders can skew; the second is the real, money-weighted margin the finance
-   team would recognise.
+   see **Independent 20.66%, Regional 20.52%, National Group 20.18%**.
+5. **Compare the two answers - the ranking flips.** Without the metric view, National Group
+   looked the *most* profitable (20.70%). With the governed metric, National Group is
+   actually the *least* profitable (20.18%) and Independent comes out on top (20.66%). Same
+   question, opposite business conclusion. The naive average let a few tiny, high-margin
+   orders punch above their weight; the governed metric weights by real money.
 
 💡 The lesson: a metric view is a single, governed definition of a business number. Every
 tool - Genie, dashboards, notebooks - gets the *same* answer, because the maths lives in

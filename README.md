@@ -44,7 +44,7 @@ web browser. There is no local install and no per-participant setup.
 | `data/`         | Deterministic dataset generator plus committed clean and raw (dirty) JSON, with the schema and seeded data-quality list. |
 | `genie/`        | Genie space-definition JSON files and a script to recreate the spaces. |
 | `sdp_pipeline/` | Pointer for the Spark Declarative Pipelines topic (built live with Genie Code). |
-| `lakebase/`     | Lakebase provisioning, sync of `gold_customer_scorecard`, and branch/PITR/Data API scripts. |
+| `lakebase/`     | Lakebase facilitator setup (provision + group grants) plus the participant flow: create your own branch, sync `gold_customer_scorecard` into it, point-lookup queries, and PITR. |
 
 ## Cleanup
 

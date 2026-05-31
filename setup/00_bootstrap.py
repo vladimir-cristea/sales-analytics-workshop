@@ -35,12 +35,16 @@ dbutils.widgets.text("participants_group", "workshop_participants", "Participant
 dbutils.widgets.text("participant_users", "", "Participant users (comma-separated emails; blank = just you)")
 dbutils.widgets.dropdown("create_catalog", "false", ["true", "false"], "Create catalog? (only if you need a fresh one)")
 dbutils.widgets.text("data_dir", "", "Override repo data dir (blank = auto-detect)")
+dbutils.widgets.dropdown("provision_lakebase", "false", ["true", "false"], "Provision Lakebase project + grant group? (Practical 3 setup)")
+dbutils.widgets.text("lakebase_project", "workshop-scorecard", "Lakebase project name")
 
 CATALOG = dbutils.widgets.get("catalog").strip()
 SCHEMA = dbutils.widgets.get("schema").strip()
 VOLUME = dbutils.widgets.get("volume").strip()
 PARTICIPANTS_GROUP = dbutils.widgets.get("participants_group").strip()
 CREATE_CATALOG = dbutils.widgets.get("create_catalog").strip().lower() == "true"
+PROVISION_LAKEBASE = dbutils.widgets.get("provision_lakebase").strip().lower() == "true"
+LAKEBASE_PROJECT = dbutils.widgets.get("lakebase_project").strip()
 _users_raw = dbutils.widgets.get("participant_users").strip()
 
 current_user = spark.sql("SELECT current_user()").collect()[0][0]
@@ -53,6 +57,7 @@ print(f"Volume ............... {VOLUME_ROOT}")
 print(f"Participant group .... {PARTICIPANTS_GROUP}")
 print(f"Per-user schemas ..... {PARTICIPANT_USERS}")
 print(f"Create catalog? ...... {CREATE_CATALOG}")
+print(f"Provision Lakebase? .. {PROVISION_LAKEBASE}  (project: {LAKEBASE_PROJECT})")
 
 # COMMAND ----------
 
@@ -469,6 +474,92 @@ try:
 except Exception as e:
     print(f"⚠️  Group grants skipped - does group `{PARTICIPANTS_GROUP}` exist? "
           f"Create it (Settings → Identity and Access → Groups) and re-run. Detail: {str(e)[:160]}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 8b. (Opt-in) Provision the Lakebase project for Practical 3
+# MAGIC
+# MAGIC Set `provision_lakebase = true` to do the **facilitator-only** Lakebase setup. This is
+# MAGIC the only Lakebase action the facilitator takes - it does **not** sync any table.
+# MAGIC Participants create their own branch and sync the gold table into it themselves
+# MAGIC (that is the teaching moment), so all this step does is:
+# MAGIC
+# MAGIC 1. **Get-or-create the Lakebase Autoscaling project** (idempotent: reuse if it already
+# MAGIC    exists; create it otherwise). The project ships with a `production` branch, a
+# MAGIC    `primary` endpoint and a default `databricks_postgres` database - that database is
+# MAGIC    sufficient, so nothing extra is created.
+# MAGIC 2. **Grant the participant group exactly the permission set a participant needs to
+# MAGIC    create their own branch and sync into it** (verified end-to-end as a non-admin):
+# MAGIC    - Lakebase: a single group Postgres role (`identity_type=GROUP`, via the role API,
+# MAGIC      never raw SQL) **and `CAN_MANAGE` on the project**. `CAN_MANAGE` is required:
+# MAGIC      `CAN_USE` lets a member connect to existing branches but is rejected on branch
+# MAGIC      *creation* ("not authorized ... assign 'Can Manage'").
+# MAGIC    - UC: the participant reads the source gold table and writes the synced-table object
+# MAGIC      into their own scratch schema. `USE CATALOG` + `USE SCHEMA`/`SELECT` on
+# MAGIC      `shared_data` are already granted in section 8; `CREATE TABLE` on each `ws_<user>`
+# MAGIC      schema is already granted there too. So no extra UC grant is needed here.
+# MAGIC
+# MAGIC Group grants need an **account-level** `workshop_participants` group; the block is
+# MAGIC defensive and skips the grants (reporting why) if the group is absent.
+# MAGIC
+# MAGIC > GOTCHA: a deleted project/branch name stays reserved for several minutes. If you tore
+# MAGIC > one down, provision with a fresh `lakebase_project` name.
+
+# COMMAND ----------
+
+if not PROVISION_LAKEBASE:
+    print("⏭️  Skipping Lakebase provisioning (set provision_lakebase=true to enable).")
+else:
+    from databricks.sdk import WorkspaceClient
+
+    w = WorkspaceClient()
+    api = w.api_client
+    proj_path = f"projects/{LAKEBASE_PROJECT}"
+
+    # 1) Get-or-create the project (idempotent). Lakebase Autoscaling lives under the
+    #    /api/2.0/postgres/* surface; create-project takes project_id as a query param.
+    try:
+        existing = api.do("GET", f"/api/2.0/postgres/{proj_path}")
+        print(f"✅ Reusing existing Lakebase project {existing.get('name', proj_path)}")
+    except Exception:
+        api.do("POST", "/api/2.0/postgres/projects",
+               query={"project_id": LAKEBASE_PROJECT},
+               body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
+        print(f"✅ Created Lakebase project {proj_path}")
+
+    # 2) Confirm the default database. The project ships with `databricks_postgres`,
+    #    which is sufficient for the synced-table target - nothing to create.
+    print("ℹ️  Default database `databricks_postgres` ships with the project - sufficient, "
+          "no database creation needed.")
+
+    # 3) Grant the participant group the permission set needed to branch + sync.
+    try:
+        # (a) ONE group Postgres role on the production branch (COW branches inherit it).
+        #     Use the role API, NOT raw SQL CREATE ROLE (raw SQL leaves NO_LOGIN, OAuth fails).
+        try:
+            api.do("POST", f"/api/2.0/postgres/{proj_path}/branches/production/roles",
+                   body={"spec": {"auth_method": "LAKEBASE_OAUTH_V1",
+                                  "identity_type": "GROUP",
+                                  "postgres_role": PARTICIPANTS_GROUP}})
+            print(f"✅ Created group Postgres role `{PARTICIPANTS_GROUP}` on production branch")
+        except Exception as re:
+            # Role already exists -> idempotent no-op.
+            print(f"ℹ️  Group Postgres role already present (or: {str(re)[:120]})")
+
+        # (b) CAN_MANAGE on the project (required for branch creation; CAN_USE is NOT enough).
+        #     PATCH merges into the existing ACL rather than replacing it.
+        api.do("PATCH", f"/api/2.0/permissions/database-projects/{LAKEBASE_PROJECT}",
+               body={"access_control_list": [
+                   {"group_name": PARTICIPANTS_GROUP, "permission_level": "CAN_MANAGE"}]})
+        print(f"✅ Granted CAN_MANAGE on project to group `{PARTICIPANTS_GROUP}` "
+              f"(enables each participant to create their own branch)")
+    except Exception as e:
+        print(f"⚠️  Lakebase group grants skipped - does account-level group "
+              f"`{PARTICIPANTS_GROUP}` exist? Detail: {str(e)[:180]}")
+
+    print("🟢 Lakebase facilitator setup done. Participants now create their own branch + sync "
+          "(see lakebase/README.md). The bootstrap does NOT sync any table.")
 
 # COMMAND ----------
 

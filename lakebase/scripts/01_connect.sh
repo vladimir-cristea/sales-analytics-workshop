@@ -9,10 +9,10 @@
 #
 # Usage:
 #   source lakebase/scripts/01_connect.sh                 # production / primary
-#   source lakebase/scripts/01_connect.sh dev-experiment  # a named branch
+#   source lakebase/scripts/01_connect.sh dev-alice       # YOUR named branch
 #   ENDPOINT_ID=ro-replica source lakebase/scripts/01_connect.sh   # a replica
-# Then:
-#   psql "$PGURI" -c "SELECT count(*) FROM public.customer_scorecard;"
+# Then (the synced table lands in your ws_<user> schema):
+#   psql "$PGURI" -c "SELECT count(*) FROM <your-ws-schema>.customer_scorecard_synced;"
 # ---------------------------------------------------------------------------
 PROJECT="${PROJECT:-workshop-scorecard}"
 BRANCH="${1:-production}"

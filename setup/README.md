@@ -17,10 +17,15 @@ into the UC volume by the notebook itself, so there is no manual upload.
 7. Build `gold_customer_scorecard`, the heavy-OLAP point-lookup table keyed by `customer_id`.
 8. Build the governed `sales_metrics` metric view (queried with `MEASURE(...)`).
 9. Create one `ws_<user>` scratch schema per participant and grant the group read access.
+9b. (Opt-in) Provision Lakebase for Practical 3: set `provision_lakebase=true` to
+   get-or-create the Lakebase Autoscaling project, confirm its default `databricks_postgres`
+   database, and grant the `workshop_participants` group the branch-and-sync permission set
+   (group Postgres role + `CAN_MANAGE` on the project). It does **not** sync any table -
+   participants do that themselves. Idempotent; defaults off.
 10. Verify: print volume files and row counts.
 
-Group grants are skipped gracefully when the `workshop_participants` group does not exist;
-create it and re-run.
+Group grants (both the section-8 UC grants and the section-9b Lakebase grants) are skipped
+gracefully when the `workshop_participants` group does not exist; create it and re-run.
 
 ## Files
 
@@ -36,5 +41,8 @@ create it and re-run.
 The thin per-step scripts (`00a` … `06`) mirror each notebook section for transparency.
 `00_bootstrap` is self-contained, so *Run all* needs nothing else.
 
-> Lakebase provisioning and the sync of `gold_customer_scorecard` are handled by the scripts
-> in `lakebase/`. This bootstrap only guarantees the table exists in UC.
+> The bootstrap guarantees `gold_customer_scorecard` exists in UC and (with
+> `provision_lakebase=true`) does the Lakebase facilitator setup: provision the project +
+> grant the group. The participant flow (create your own branch, sync the gold table into it,
+> query, PITR) lives in `lakebase/`. `lakebase/synced_table/facilitator_grants.sh` is the
+> standalone CLI equivalent of the opt-in bootstrap step.

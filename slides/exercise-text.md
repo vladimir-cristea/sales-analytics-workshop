@@ -110,13 +110,17 @@ A simple question becomes one query. A *business* question often needs several s
 filter, aggregate, compare, then conclude. Agent mode lets Genie plan and chain those
 steps.
 
-1. Make sure the space is in **Agent mode**.
-2. Ask a multi-step question, for example:
+1. Ask a multi-step question, for example:
    **"Which product categories are growing fastest in Scotland, and which account managers
    cover the most customers there so they can push those categories?"**
-3. Watch it break the problem down, run more than one query, and synthesise an answer.
-   Expect something like: *Frozen is growing fastest (+85%), then Alcohol (+26%); Priya
-   Sharma covers the most Scottish outlets, so she should lead the push.*
+2. Watch Genie's agent reasoning break the problem down, run more than one analysis, and
+   synthesise an answer. Expect something like: *Frozen is growing fastest (+85%), then
+   Alcohol (+26%); Priya Sharma covers the most Scottish outlets, so she should lead the
+   push.*
+
+💡 If your workspace has the **Genie Agent mode** preview enabled (Settings → Previews) you
+will see the steps laid out explicitly. Even without that named toggle, Genie's multi-step
+reasoning still answers questions like this in one go - ask your facilitator which is on.
 
 💡 Notice the difference from Part 2: this question cannot be answered by a single
 `GROUP BY`. It needs a growth analysis, a coverage analysis, and then a recommendation that
@@ -126,38 +130,50 @@ ties them together. Agent mode is doing analyst-style reasoning, not just transl
 
 The same space is reachable from two surfaces, aimed at two audiences.
 
-1. **Genie space (builder surface):** what you have been using. This is where a data team
+1. **Genie space (builder surface):** what you have been using. Left nav → **Genie** →
+   **"Northgate Provisions - Sales Analytics"**. This is the full builder, where a data team
    curates instructions, sample questions and trusted assets.
-2. **Genie in Databricks One (business-user surface):** open Databricks One and find the
-   same space there. This is the clean, no-clutter view a non-technical colleague gets.
+2. **Genie in Databricks One (business-user surface):** open **Databricks One** (the
+   simplified business-user home) → **Genie** → the same space. Ask-and-answer only, none of
+   the SQL or builder chrome - the clean view a non-technical colleague gets.
 
-Open the same space both ways and notice it is one governed asset, two experiences.
+Open the same space both ways: it is one governed asset over the same governed tables, just
+two different experiences. (Your facilitator will share the direct link.)
 
 ### Part 7: Metric views - one number, one source of truth (must-do)
 
 This is the most important part of the practical. We are going to see *why* governed
 metrics matter.
 
-1. **Ask without the metric view first.** In the space (sources = the base tables only),
-   ask: **"What is our average profit margin by segment?"** Genie's naive answer makes
-   **National Group look the most profitable, at about 20.70%**. Note the ranking.
-2. **Look at how Genie computed it.** Open the SQL. It almost certainly averaged the
-   per-line margin percentages: `AVG(margin_pct)`. That is an *average of ratios* - every
-   order line counts equally, whether it sold one case or a thousand.
-3. **Now add the governed metric.** Add the `sales_metrics` metric view as a source on the
-   space. It already defines the measures your business cares about - `Total Revenue`,
-   `Total Profit`, `Profit Margin %`, `Order Count`, `Units Sold`, `Avg Order Value`,
-   `Active Customers (90d)` - sliceable by `Region`, `Segment`, `Account Manager`,
-   `Category` and `Order Month`.
-4. **Re-ask the exact same question:** **"What is our average profit margin by segment?"**
-   This time Genie uses the metric view's governed definition of `Profit Margin %` -
-   `SUM(profit) / SUM(revenue)`, a *ratio of sums*, weighted by actual money. You should
-   see **Independent 20.66%, Regional 20.52%, National Group 20.18%**.
-5. **Compare the two answers - the ranking flips.** Without the metric view, National Group
-   looked the *most* profitable (20.70%). With the governed metric, National Group is
-   actually the *least* profitable (20.18%) and Independent comes out on top (20.66%). Same
-   question, opposite business conclusion. The naive average let a few tiny, high-margin
-   orders punch above their weight; the governed metric weights by real money.
+**Step 1 - watch a simple question give an impossible answer.**
+
+1. With the space on the base tables only, ask: **"How many active customers in the last 90
+   days, by segment?"**
+2. Genie returns something like **Independent 69, Regional 32, National Group 20**. That is
+   *impossible* - there are only 41 Independent, 17 Regional and 12 National Group customers
+   in total. Open the SQL: it summed monthly active counts, double-counting anyone who
+   ordered in more than one month.
+
+**Step 2 - add the governed metric.**
+
+3. Add the `sales_metrics` metric view as a source on the space. It already defines the
+   measures your business cares about - `Total Revenue`, `Total Profit`, `Profit Margin %`,
+   `Order Count`, `Units Sold`, `Avg Order Value`, `Active Customers (90d)` - sliceable by
+   `Region`, `Segment`, `Account Manager`, `Category` and `Order Month`.
+4. Re-ask the exact same question. Now Genie uses the governed `Active Customers (90d)`
+   measure (a proper distinct count) and returns **Independent 41, Regional 17, National
+   Group 12** - numbers that can actually be true.
+
+**Step 3 - the subtle one still flips the ranking.**
+
+5. Try a harder-to-spot case. Ask **"What is the average profit margin by segment?"**
+   - Without the metric view (avg-of-ratios): **National Group 20.70%, Regional 20.42%,
+     Independent 20.32%** - National Group looks the most profitable.
+   - With the governed `Profit Margin %` measure (`SUM(profit)/SUM(revenue)`, a ratio of
+     sums): **Independent 20.66%, Regional 20.52%, National Group 20.18%** - the ranking
+     *flips*, National Group is actually the least profitable.
+   The gap is small because the data is homogeneous, which is exactly why it is dangerous:
+   nobody would have queried it, yet the business conclusion is the opposite.
 
 💡 The lesson: a metric view is a single, governed definition of a business number. Every
 tool - Genie, dashboards, notebooks - gets the *same* answer, because the maths lives in

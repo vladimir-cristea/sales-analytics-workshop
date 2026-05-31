@@ -1,0 +1,81 @@
+{"customer_id": 1, "customer_name": "The White Hart Bistro", "region": "Midlands", "segment": "National Group", "account_manager": "Tom Whitfield", "join_date": "2022-04-03"}
+{"customer_id": 2, "customer_name": "Harbour Bistro", "region": "Scotland", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2024-04-24"}
+{"customer_id": 3, "customer_name": "Old Mill Caf\u00e9", "region": "EMEA", "segment": "National Group", "account_manager": "Tom Whitfield", "join_date": "2023-11-01"}
+{"customer_id": 4, "customer_name": "Hillside Inn", "region": "Northern Ireland", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2024-01-22"}
+{"customer_id": 5, "customer_name": "Old Mill Tavern", "region": "Midlands", "segment": "Regional", "account_manager": "Yusuf Khan", "join_date": "2025-11-16"}
+{"customer_id": 6, "customer_name": "The Crown Provisions", "region": "North West", "segment": "Independent", "account_manager": "Aisha Bello", "join_date": "2021-11-15"}
+{"customer_id": 7, "customer_name": "The Bell Brasserie", "region": "North East", "segment": "National Group", "account_manager": "Priya Sharma", "join_date": "2023-01-06"}
+{"customer_id": 8, "customer_name": "Clifton Grill", "region": "London", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2023-07-30"}
+{"customer_id": 9, "customer_name": "Market Square Bistro", "region": "North East", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2024-02-05"}
+{"customer_id": 10, "customer_name": "Station Grill", "region": "South East", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2024-09-16"}
+{"customer_id": 11, "customer_name": "Highgate Larder", "region": "Atlantis", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2021-07-26"}
+{"customer_id": 12, "customer_name": "Bridge Street Pantry", "region": "North West", "segment": "Regional", "account_manager": "Tom Whitfield", "join_date": "2023-01-29"}
+{"customer_id": 13, "customer_name": "Ashfield Deli", "region": "Northern Ireland", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2021-05-27"}
+{"customer_id": 14, "customer_name": "Hillside Provisions", "region": "East of England", "segment": "Independent", "account_manager": "Tom Whitfield", "join_date": "2023-08-05"}
+{"customer_id": 15, "customer_name": "The Plough Diner", "region": "North West", "segment": "Regional", "account_manager": "Yusuf Khan", "join_date": "2025-04-23"}
+{"customer_id": 16, "customer_name": "Elm Tree Caf\u00e9", "region": "London", "segment": "Regional", "account_manager": "Yusuf Khan", "join_date": "2022-10-09"}
+{"customer_id": 17, "customer_name": "Greenfield Deli", "region": "Wales", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2022-10-07"}
+{"customer_id": 18, "customer_name": "The Bell Eatery", "region": "Northern Ireland", "segment": "Regional", "account_manager": "Daniel O'Connor", "join_date": "2021-10-20"}
+{"customer_id": 19, "customer_name": "Maple Kitchen", "region": "Unknown", "segment": "Regional", "account_manager": "Sophie Laurent", "join_date": "2022-06-23"}
+{"customer_id": 20, "customer_name": "The George Food Hall", "region": "North East", "segment": "Independent", "account_manager": "Aisha Bello", "join_date": "2022-03-26"}
+{"customer_id": 21, "customer_name": "Harbour Wine Bar", "region": "London", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2021-08-13"}
+{"customer_id": 22, "customer_name": "Harbour Provisions", "region": "North East", "segment": "Independent", "account_manager": "Sophie Laurent", "join_date": "2021-05-11"}
+{"customer_id": 23, "customer_name": "Bridge Street Coffee House", "region": "Yorkshire", "segment": "Independent", "account_manager": "Sophie Laurent", "join_date": "2022-05-30"}
+{"customer_id": 24, "customer_name": "Market Square Inn", "region": "South East", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2025-12-18"}
+{"customer_id": 25, "customer_name": "Market Square Pantry", "region": "North West", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2022-08-25"}
+{"customer_id": 26, "customer_name": "Old Mill Provisions", "region": "Midlands", "segment": "Regional", "account_manager": "Sophie Laurent", "join_date": "2025-04-10"}
+{"customer_id": 27, "customer_name": "Kings Head Wine Bar", "region": "MARS", "segment": "Independent", "account_manager": "Aisha Bello", "join_date": "2025-09-20"}
+{"customer_id": 28, "customer_name": "The White Hart Wine Bar", "region": "South West", "segment": "Independent", "account_manager": "Aisha Bello", "join_date": "2025-04-11"}
+{"customer_id": 29, "customer_name": "Kings Head Diner", "region": "Scotland", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2024-05-11"}
+{"customer_id": 30, "customer_name": "The Anchor Eatery", "region": "North West", "segment": "National Group", "account_manager": "Yusuf Khan", "join_date": "2025-07-11"}
+{"customer_id": 31, "customer_name": "Station Tavern", "region": "Wales", "segment": "National Group", "account_manager": "Priya Sharma", "join_date": "2021-06-25"}
+{"customer_id": 32, "customer_name": "The George Eatery", "region": "Scotland", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2021-09-15"}
+{"customer_id": 33, "customer_name": "Harbour Eatery", "region": "South West", "segment": "Independent", "account_manager": "Aisha Bello", "join_date": "2023-12-17"}
+{"customer_id": 34, "customer_name": "Clifton Food Hall", "region": "Scotland", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2025-02-03"}
+{"customer_id": 35, "customer_name": "Park Lane Deli", "region": "North East", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2024-08-23"}
+{"customer_id": 36, "customer_name": "Ashfield Convenience", "region": "Yorkshire", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2022-05-23"}
+{"customer_id": 37, "customer_name": "Highgate Stores", "region": "Wales", "segment": "Regional", "account_manager": "Sophie Laurent", "join_date": "2022-04-17"}
+{"customer_id": 38, "customer_name": "Corner Tavern", "region": "n/a", "segment": "National Group", "account_manager": "Priya Sharma", "join_date": "2022-04-14"}
+{"customer_id": 39, "customer_name": "Greenfield Caf\u00e9", "region": "South East", "segment": "Independent", "account_manager": "Sophie Laurent", "join_date": "2022-05-03"}
+{"customer_id": 40, "customer_name": "Maple Eatery", "region": "South West", "segment": "Regional", "account_manager": "Marcus Reid", "join_date": "2025-12-13"}
+{"customer_id": 41, "customer_name": "Corner Eatery", "region": "Yorkshire", "segment": "Regional", "account_manager": "Yusuf Khan", "join_date": "2023-04-14"}
+{"customer_id": 42, "customer_name": "The Bell Bistro", "region": "North East", "segment": "National Group", "account_manager": "Aisha Bello", "join_date": "2023-05-18"}
+{"customer_id": 43, "customer_name": "Old Mill Convenience", "region": "London", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2024-08-31"}
+{"customer_id": 44, "customer_name": "Riverside Coffee House", "region": "South East", "segment": "Independent", "account_manager": "Tom Whitfield", "join_date": "2022-01-28"}
+{"customer_id": 45, "customer_name": "The Bell Diner", "region": "North East", "segment": "Regional", "account_manager": "Tom Whitfield", "join_date": "2022-07-25"}
+{"customer_id": 46, "customer_name": "The Royal Oak Tavern", "region": "South East", "segment": "Independent", "account_manager": "Daniel O'Connor", "join_date": "2025-07-13"}
+{"customer_id": 47, "customer_name": "Clifton Diner", "region": "Northern Ireland", "segment": "National Group", "account_manager": "Sophie Laurent", "join_date": "2025-09-09"}
+{"customer_id": 48, "customer_name": "The Crown Stores", "region": "East of England", "segment": "Independent", "account_manager": "Tom Whitfield", "join_date": "2023-04-13"}
+{"customer_id": 49, "customer_name": "Willow Eatery", "region": "North East", "segment": "Regional", "account_manager": "Priya Sharma", "join_date": "2021-12-04"}
+{"customer_id": 50, "customer_name": "Bridge Street Inn", "region": "Midlands", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2025-05-27"}
+{"customer_id": 51, "customer_name": "The Royal Oak Larder", "region": "Scotland", "segment": "Regional", "account_manager": "Marcus Reid", "join_date": "2025-01-11"}
+{"customer_id": 52, "customer_name": "Willow Kitchen", "region": "Europe", "segment": "Regional", "account_manager": "Priya Sharma", "join_date": "2024-04-01"}
+{"customer_id": 53, "customer_name": "The George Diner", "region": "North West", "segment": "National Group", "account_manager": "Priya Sharma", "join_date": "2021-04-13"}
+{"customer_id": 54, "customer_name": "Castle Wine Bar", "region": "Scotland", "segment": "National Group", "account_manager": "Priya Sharma", "join_date": "2025-10-10"}
+{"customer_id": 55, "customer_name": "Kings Head Stores", "region": "Northern Ireland", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2022-04-27"}
+{"customer_id": 56, "customer_name": "Bridge Street Bistro", "region": "Wales", "segment": "Independent", "account_manager": "Tom Whitfield", "join_date": "2024-03-31"}
+{"customer_id": 57, "customer_name": "Hillside Caf\u00e9", "region": "North East", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2024-04-10"}
+{"customer_id": 58, "customer_name": "Corner Wine Bar", "region": "Midlands", "segment": "Regional", "account_manager": "Tom Whitfield", "join_date": "2024-10-03"}
+{"customer_id": 59, "customer_name": "Park Lane Brasserie", "region": "North East", "segment": "Regional", "account_manager": "Tom Whitfield", "join_date": "2024-10-07"}
+{"customer_id": 60, "customer_name": "The White Hart Larder", "region": "South East", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2023-07-28"}
+{"customer_id": 61, "customer_name": "Hillside Bistro", "region": "East of England", "segment": "National Group", "account_manager": "Sophie Laurent", "join_date": "2022-06-28"}
+{"customer_id": 62, "customer_name": "Harbour Grill", "region": "East of England", "segment": "Independent", "account_manager": "Aisha Bello", "join_date": "2022-08-07"}
+{"customer_id": 63, "customer_name": "Kings Head Convenience", "region": "Midlands", "segment": "Independent", "account_manager": "Sophie Laurent", "join_date": "2025-07-11"}
+{"customer_id": 64, "customer_name": "The Crown Diner", "region": "Northern Ireland", "segment": "Regional", "account_manager": "Priya Sharma", "join_date": "2025-12-04"}
+{"customer_id": 65, "customer_name": "Harbour Pantry", "region": "South East", "segment": "National Group", "account_manager": "Marcus Reid", "join_date": "2024-02-08"}
+{"customer_id": 66, "customer_name": "Station Deli", "region": "East of England", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2024-07-22"}
+{"customer_id": 67, "customer_name": "Clifton Pantry", "region": "Midlands", "segment": "Independent", "account_manager": "Yusuf Khan", "join_date": "2021-04-15"}
+{"customer_id": 68, "customer_name": "Greenfield Food Hall", "region": "London", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2022-11-15"}
+{"customer_id": 69, "customer_name": "Elm Tree Kitchen", "region": "Midlands", "segment": "Independent", "account_manager": "Tom Whitfield", "join_date": "2025-02-27"}
+{"customer_id": 70, "customer_name": "The Royal Oak Diner", "region": "Scotland", "segment": "Independent", "account_manager": "Priya Sharma", "join_date": "2021-08-18"}
+{"customer_id": 170, "customer_name": "QA Test Outlet 1", "region": "North West", "segment": "TEST", "account_manager": "Priya Sharma", "join_date": "2026-05-31"}
+{"customer_id": 171, "customer_name": "QA Test Outlet 2", "region": "East of England", "segment": "TEST", "account_manager": "Daniel O'Connor", "join_date": "2026-05-31"}
+{"customer_id": 172, "customer_name": "QA Test Outlet 3", "region": "East of England", "segment": "TEST", "account_manager": "Sophie Laurent", "join_date": "2026-05-31"}
+{"customer_id": 173, "customer_name": "QA Test Outlet 4", "region": "Northern Ireland", "segment": "TEST", "account_manager": "Sophie Laurent", "join_date": "2026-05-31"}
+{"customer_id": 270, "customer_name": "Test Kitchen Ltd", "region": "London", "segment": "National Group", "account_manager": "Daniel O'Connor", "join_date": "2024-07-29"}
+{"customer_id": 271, "customer_name": "The Testing Tavern", "region": "South East", "segment": "Regional", "account_manager": "Priya Sharma", "join_date": "2024-09-03"}
+{"customer_id": 272, "customer_name": "Beta Test Bistro", "region": "Northern Ireland", "segment": "Regional", "account_manager": "Tom Whitfield", "join_date": "2025-02-03"}
+{"customer_id": 273, "customer_name": "Smoke-Test Stores", "region": "East of England", "segment": "Regional", "account_manager": "Yusuf Khan", "join_date": "2025-02-15"}
+{"customer_id": 274, "customer_name": "Regression Test Deli", "region": "London", "segment": "National Group", "account_manager": "Tom Whitfield", "join_date": "2025-09-05"}
+{"customer_id": null, "customer_name": "Highgate Pantry", "region": "North East", "segment": "Independent", "account_manager": "Sophie Laurent", "join_date": "2025-12-28"}
+{"customer_id": null, "customer_name": "Clifton Larder", "region": "East of England", "segment": "Independent", "account_manager": "Marcus Reid", "join_date": "2024-10-06"}

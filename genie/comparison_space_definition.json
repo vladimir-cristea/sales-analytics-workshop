@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "data_sources": {
+    "tables": [
+      { "identifier": "vcr_serverless_catalog.shared_data.sales_metrics" }
+    ]
+  }
+}

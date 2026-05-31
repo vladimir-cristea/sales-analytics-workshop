@@ -7,7 +7,8 @@ outlets (pubs, cafes, delis, convenience stores) across the UK.
 
 **Shared facts you can rely on**
 
-- Catalog `vcr_serverless_catalog`, schema `shared_data`.
+- Catalog `vcr_serverless_catalog`, schema `shared_data` (the catalog name may differ on
+  your workspace - the facilitator will tell you).
 - Clean curated tables: `customers`, `products`, `orders`, plus pre-aggregated
   `product_performance_summary` and `monthly_sales_summary`.
 - Governed metric view: `sales_metrics`.
@@ -119,18 +120,22 @@ metrics matter.
    per-line margin percentages: `AVG(margin_pct)`. That is an *average of ratios* - every
    order line counts equally, whether it sold one case or a thousand.
 3. **Now add the governed metric.** Add the `sales_metrics` metric view as a source on the
-   space.
+   space. It already defines the measures your business cares about - `Total Revenue`,
+   `Total Profit`, `Profit Margin %`, `Order Count`, `Units Sold`, `Avg Order Value`,
+   `Active Customers (90d)` - sliceable by `Region`, `Segment`, `Account Manager`,
+   `Category` and `Order Month`.
 4. **Re-ask the exact same question:** **"What is our average profit margin by segment?"**
-   This time Genie uses the metric view's definition,
-   `Profit Margin % = SUM(profit) / SUM(revenue)` - a *ratio of sums*, weighted by actual
-   money.
+   This time Genie uses the metric view's governed definition of `Profit Margin %` -
+   `SUM(profit) / SUM(revenue)`, a *ratio of sums*, weighted by actual money. You should
+   see roughly **Independent 20.66%, Regional 20.52%, National Group 20.18%**.
 5. **Compare the two answers.** They are different. The first is a naive average that a
    few tiny orders can skew; the second is the real, money-weighted margin the finance
    team would recognise.
 
 💡 The lesson: a metric view is a single, governed definition of a business number. Every
 tool - Genie, dashboards, notebooks - gets the *same* answer, because the maths lives in
-one place instead of being re-invented in every query.
+one place instead of being re-invented in every query. In SQL you would pull a measure out
+with `MEASURE("Profit Margin %")`; Genie does that for you under the hood.
 
 ⚠️ Avg-of-ratios vs ratio-of-sums is one of the most common ways analysts quietly
 disagree on "the same" KPI. Metric views end that argument.

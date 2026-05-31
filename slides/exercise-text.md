@@ -37,6 +37,12 @@ through the parts below. You are not writing SQL. You are having a conversation.
 are the guided tour; **Part 7 (metric views) is the must-do highlight**, and there is an
 optional Bonus at the end.
 
+> _Facilitator note: this practical uses three Genie spaces - the curated "Sales Analytics"
+> (Parts 1-6), and two A/B spaces "Base Only (no context)" and "Metric View Comparison"
+> (Parts 4 and 7). Their actual titles in the workspace use a long dash between "Northgate
+> Provisions" and the suffix rather than the hyphen shown here (house style), so search by
+> the space name or use the links you share. Have all three open before the session._
+
 ### Part 1: Get your bearings
 
 1. Open the Genie space and read the suggested questions it offers.
@@ -78,35 +84,30 @@ Genie remembers what you just asked. Build on a previous answer instead of start
 
 Notice you never repeated the region. That is conversational analytics.
 
-### Part 4: Teach Genie your business (business context)
+### Part 4: Why business context matters
 
-Out of the box Genie knows your tables. It does not know what *your team means* by a word
-like "at-risk", or quirks like "discount is stored as a percentage". You can teach it, and
-the difference is dramatic.
+Out of the box Genie knows your tables. It does not know what *your team means* by "at-risk",
+or quirks like "discount is stored as a percentage". The curated "Sales Analytics" space you
+have been using already has that context baked in - which is exactly why your answers in
+Parts 1 to 3 were sensible. To feel the difference, compare it against the no-context space.
 
-1. **See it get things wrong first.** Your facilitator will show this on a copy of the
-   space with the business context stripped out (so a dozen people are not editing one
-   space at once). With no definition of "at-risk", asking **"Which customers are at risk of
-   churning?"** returns nothing useful (0 rows).
-2. **Teach it a definition.** Add: *"An at-risk customer has not ordered in the last 45
-   days."* Add a synonym so "outlet" and "venue" both mean a customer. Re-ask the same
-   question - now you get the 4 quiet outlets. The definition lives in the semantic layer,
-   not in each person's head.
-3. **Repeat with an expression rule.** Add the rule that revenue must apply the discount as
-   `discount_pct / 100`, then re-ask **"Who are our top 10 customers by revenue?"**
-
-⚠️ Why step 3 matters: without that rule Genie reads `discount_pct = 20` as "subtract 20",
-not "subtract 20%", and every revenue figure comes back **negative**. One line of business
-context turns nonsense into the correct ranking. This is the single best illustration of
-why a curated Genie space beats a raw one.
+1. **See it without context.** On **"Northgate Provisions - Base Only (no context)"**, ask
+   **"Which customers are at risk of churning?"** With no definition of "at-risk", Genie has
+   nothing to anchor on and typically returns nothing useful (often 0 rows).
+2. **See it with context.** Ask the same question on the curated **"Northgate Provisions -
+   Sales Analytics"** space. Because someone defined "at-risk" (no order in the last 45 days)
+   in the semantic layer, you get the 4 quiet outlets. The definition lives in the space, not
+   in each person's head.
+3. **The other kind of context: expression rules.** The curated space also encodes that
+   revenue must apply the discount as `discount_pct / 100`. Without that rule, Genie can read
+   `discount_pct = 20` as "subtract 20" instead of "subtract 20%", and revenue comes back
+   wildly wrong (often **negative**) - try **"Who are our top 10 customers by revenue?"** on
+   each space and compare.
 
 💡 This is how a Genie space goes from "clever demo" to "trusted internal tool": curated
 definitions, synonyms, expression rules and sample questions that encode how your business
-actually talks.
-
-⚠️ If everyone is sharing one space, treat all the editing here (adding definitions,
-synonyms and expression rules) as a facilitator-led demo rather than a dozen people editing
-the same instructions at once. If you each have your own copy of the space, do it yourself.
+actually talks. Everything in this part is pre-built on the two spaces, so there is nothing
+to edit - just compare the answers.
 
 ### Part 5: Agent mode - let Genie reason in steps
 
@@ -147,46 +148,50 @@ enter via Databricks One.
 
 ### Part 7: Metric views - one number, one source of truth (must-do)
 
-This is the most important part of the practical. We are going to see *why* governed
-metrics matter.
+This is the most important part of the practical. We are going to see *why* governed metrics
+matter, using two purpose-built spaces side by side:
 
-**Step 1 - watch a simple question give an impossible answer.**
+- **"Northgate Provisions - Base Only (no context)"** - the summary tables, no governed
+  metric. The *without* arm.
+- **"Northgate Provisions - Metric View Comparison"** - the governed `sales_metrics` metric
+  view. The *with* arm.
 
-1. With the space on the base tables only, ask: **"How many active customers in the last 90
-   days, by segment?"**
-2. Genie returns something like **Independent 69, Regional 32, National Group 20**. That is
-   *impossible* - there are only 41 Independent, 17 Regional and 12 National Group customers
-   in total. Open the SQL: it summed monthly active counts, double-counting anyone who
-   ordered in more than one month.
+(These are separate from the curated "Sales Analytics" space you used in Parts 1-6, which is
+already governed and would not visibly "break".)
 
-**Step 2 - add the governed metric.**
+**Step 1 - ask the without-metric space and get an impossible answer.**
 
-3. Add the `sales_metrics` metric view as a source on the space. It already defines the
-   measures your business cares about - `Total Revenue`, `Total Profit`, `Profit Margin %`,
-   `Order Count`, `Units Sold`, `Avg Order Value`, `Active Customers (90d)` - sliceable by
-   `Region`, `Segment`, `Account Manager`, `Category` and `Order Month`.
-4. Re-ask the exact same question. Now Genie uses the governed `Active Customers (90d)`
-   measure (a proper distinct count) and returns **Independent 41, Regional 17, National
-   Group 12** - numbers that can actually be true.
+1. Open **"Northgate Provisions - Base Only (no context)"** and ask exactly:
+   **"active customers (90d) by segment"**.
+2. Genie answers **Independent 69, Regional 32, National Group 20**. That is *impossible* -
+   there are only 41 Independent, 17 Regional and 12 National Group customers in the whole
+   business. Open the SQL: it summed the monthly active-customer counts, double-counting
+   anyone who ordered in more than one month.
 
-**Step 3 - the subtle one still flips the ranking.**
+**Step 2 - ask the with-metric space and get the truth.**
 
-5. Try a harder-to-spot case. Ask **"What is the average profit margin by segment?"**
-   - Without the metric view (avg-of-ratios): **National Group 20.70%, Regional 20.42%,
-     Independent 20.32%** - National Group looks the most profitable.
-   - With the governed `Profit Margin %` measure (`SUM(profit)/SUM(revenue)`, a ratio of
-     sums): **Independent 20.66%, Regional 20.52%, National Group 20.18%** - the ranking
-     *flips*, National Group is actually the least profitable.
-   The gap is small because the data is homogeneous, which is exactly why it is dangerous:
-   nobody would have queried it, yet the business conclusion is the opposite.
+3. Open **"Northgate Provisions - Metric View Comparison"** and ask the same thing:
+   **"active customers (90d) by segment"**.
+4. Now Genie uses the governed `Active Customers (90d)` measure (a proper distinct count) and
+   returns **Independent 41, Regional 17, National Group 12** - numbers that can actually be
+   true. Same question, two spaces, one of them simply cannot be wrong.
 
-💡 The lesson: a metric view is a single, governed definition of a business number. Every
-tool - Genie, dashboards, notebooks - gets the *same* answer, because the maths lives in
-one place instead of being re-invented in every query. In SQL you would pull a measure out
-with `MEASURE("Profit Margin %")`; Genie does that for you under the hood.
+💡 Use that exact phrasing, **"active customers (90d) by segment"**. If you instead say
+"...in the last 90 days...", the governed side may answer National Group **11** (a
+month-grain edge effect) rather than 12. The teaching point is identical; the round numbers
+are just cleaner with the short phrasing.
 
-⚠️ Avg-of-ratios vs ratio-of-sums is one of the most common ways analysts quietly
-disagree on "the same" KPI. Metric views end that argument.
+⚠️ Genie's *un-governed* answer is not even stable - phrase the question differently and the
+naive SQL changes again. That unpredictability is itself the argument: when the definition of
+a metric lives in the query, every asker can get a different number. A metric view pins the
+definition in **one** governed place, so `sales_metrics` returns the same answer every time,
+to Genie, to dashboards, to notebooks. In SQL you would pull a measure out with
+`MEASURE("Active Customers (90d)")`; Genie does that for you under the hood.
+
+💡 Optional aside - it is not just counts. Ratios are governed too: `Profit Margin %` is
+defined once as `SUM(profit)/SUM(revenue)` (a ratio of sums), so it cannot drift into the
+naive average-of-per-line-ratios that quietly mis-ranks segments. Same principle, subtler
+symptom.
 
 ### Bonus (if you finish early)
 

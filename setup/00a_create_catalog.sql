@@ -11,6 +11,6 @@
 
 -- COMMAND ----------
 
-CREATE CATALOG IF NOT EXISTS sales_analytics_workshop
+CREATE CATALOG IF NOT EXISTS workshop
 -- MANAGED LOCATION 's3://my-bucket/workshop'   -- uncomment if your metastore requires it
 COMMENT 'Sales analytics workshop (Northgate Provisions Co.)';

@@ -44,6 +44,7 @@ Everything else is created by the scripts in this folder.
 | `scripts/01_connect.sh`         | **Connection helper** — resolves the host and mints a fresh ~1h OAuth token, exports `$PGURI` for `psql`. `source` it. |
 | `scripts/02_load_scorecard.py`  | Works-everywhere loader: read the UC gold table, bulk-load into Postgres (runs as a Databricks job). |
 | `synced_table/create_synced_table.sh` | **Preferred** path: create a managed **synced table** (reverse ETL) into the project's `databricks_postgres`. No CREATE CATALOG. Tested ✓. |
+| `synced_table/facilitator_grants.sh` | The minimal per-participant grants that let a **non-admin** create their own synced table. Proven ✓. |
 | `sql/point_lookups.sql`         | The point-lookup exercises. |
 | `scripts/03_branch_demo.sh`     | Git-style branch + isolation proof. |
 | `scripts/04_pitr_demo.sh`       | Accidental-delete → point-in-time restore. |
@@ -87,6 +88,16 @@ workspace: **70 rows synced, queryable from Postgres.**
 > — *not* `databricks database create-synced-database-table` (provisioned-only;
 > errors "Database instance is not found" against an autoscale project).
 > Tip: `get-synced-table` needs the `synced_tables/<catalog.schema.table>` prefix.
+
+**Participant self-serve — minimal grants (proven, `synced_table/facilitator_grants.sh`).**
+Verified on the build workspace: a principal with **no workspace-admin and no
+metastore-admin** can create its own synced table and read it from Postgres, given
+exactly — UC: `USE CATALOG` on the catalog; `USE SCHEMA` + `CREATE TABLE` on their
+target schema; `USE SCHEMA` + `SELECT` on the source (auto-covered if their source
+is their own gold table). Lakebase: a Postgres role on the branch via
+`databricks postgres create-role` (NOT raw SQL), **and** `CAN_USE` on the Database
+project (`databricks permissions update database-projects <project_id> …`). Those
+last two (especially the project `CAN_USE`) are the easy-to-miss ones.
 
 **Works-everywhere alternative — loader (`scripts/02_load_scorecard.py`).** If you
 want a no-pipeline path (or to script a custom transform on the way in), reads the

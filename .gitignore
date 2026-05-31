@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────
-# Secrets & credentials — NEVER commit these
+# Secrets & credentials - NEVER commit these
 # ──────────────────────────────────────────────────────────────
 .databrickscfg
 .databricks/

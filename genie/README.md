@@ -12,21 +12,25 @@ Everything here was **built and tested live** against
 | File | Purpose |
 |------|---------|
 | `space_definition.json` | Full serialized definition of the curated space (5 tables + instructions, joins, measures, synonyms, 6 certified SQLs). Reproducible. |
-| `comparison_space_definition.json` | Minimal space (same 5 tables **+ the `sales_metrics` metric view**, no instructions) used for the metric-view A/B. |
-| `recreate_space.py` | Reference script to rebuild both spaces from the JSON. |
+| `comparison_space_definition.json` | Same 5 tables **+ the `sales_metrics` metric view**, no instructions — the **WITH** arm of the metric-view A/B. |
+| `base_only_space_definition.json` | The 5 base tables, no instructions, no metric view — the **WITHOUT** arm of the A/B (naive Genie). |
+| `recreate_space.py` | Reference script to rebuild the spaces from the JSON. |
+
+The WITHOUT/WITH pair (`base_only` vs `comparison`) differ by **exactly one thing — the metric view** — so any divergence is attributable to it alone.
 
 Recreate via MCP (preferred): `manage_genie(action="create_or_update", serialized_space=<file contents>)`.
 Gotchas when editing the JSON: tables must be **sorted by identifier**, `column_configs`
 **sorted by column_name**, and `instructions.text_instructions` must contain **at most one item**.
 
-## The two spaces built
+## The three spaces built
 
 | Space | Sources | Use |
 |-------|---------|-----|
 | **Northgate Provisions — Sales Analytics** | 5 clean tables: `customers`, `products`, `orders`, `product_performance_summary`, `monthly_sales_summary` | The main workshop space. Curated with business context. |
-| **Northgate Provisions — Metric View Comparison** | Same 5 tables **+ `sales_metrics`** (governed metric view), no instructions | Isolates what the metric view changes (Practical step 4). |
+| **Northgate Provisions — Base Only (no context)** | Same 5 tables, no instructions, no metric view | **WITHOUT** arm of the metric-view A/B (naive Genie). |
+| **Northgate Provisions — Metric View Comparison** | Same 5 tables **+ `sales_metrics`** (governed metric view), no instructions | **WITH** arm of the A/B (Practical step 4). |
 
-> `gold_customer_scorecard` is intentionally **not** in either space — that table belongs to
+> `gold_customer_scorecard` is intentionally **not** in any space — that table belongs to
 > the Lakebase practical.
 
 ---
@@ -84,21 +88,49 @@ the most customers there so they can push those categories?"*
 
 ---
 
-## Metric-view comparison (step 4) — the headline demo
+## Metric-view comparison (step 4) — WITH vs WITHOUT `sales_metrics`
 
-Question (identical both times): **"What is the average profit margin by segment?"**
-Ground-truth governed answer (direct SQL, ratio-of-sums): Independent 20.66%, Regional 20.52%,
-National Group 20.18%.
+Two metrics were tested live on the controlled pair (Base Only vs Metric View Comparison —
+identical except for the metric view). Both diverge; **#1 is the headline** (the naive answer
+is provably impossible), **#2 is the business-conclusion flip**.
 
-### (a) WITHOUT the metric view — base tables, naive Genie
+### #1 (HEADLINE) — "How many active customers in the last 90 days, by segment?"
+Same prompt both spaces.
+
+**WITHOUT** the metric view — Genie reaches for `monthly_sales_summary.active_customers` and **SUMs** it across months:
 ```sql
-SELECT c.segment, AVG(p.profit_margin_pct) AS avg_profit_margin_pct
-FROM product_performance_summary p
-JOIN orders o ON p.product_id = o.product_id
-JOIN customers c ON o.customer_id = c.customer_id
-GROUP BY c.segment
+SELECT segment, SUM(active_customers) AS active_customers_last_90_days
+FROM monthly_sales_summary
+WHERE month BETWEEN date_sub(current_date,89) AND current_date
+GROUP BY segment ORDER BY 2 DESC
 ```
-Result — **average of per-product ratios** (statistically wrong / inconsistent):
+| Segment | naive answer | total customers in segment |
+|---|---|---|
+| Independent | **69** | 41 |
+| Regional | **32** | 17 |
+| National Group | **20** | 12 |
+
+Every number is **impossible** — you cannot have 69 active Independent customers when only 41
+exist. Monthly active-customer counts are summed, so a customer active in 3 months is counted 3×.
+
+**WITH** `sales_metrics` — Genie writes a native `MEASURE()` over the governed distinct-count:
+```sql
+SELECT `Segment`, MEASURE(`Active Customers (90d)`) AS active_customers_90d
+FROM vcr_serverless_catalog.shared_data.sales_metrics
+GROUP BY ALL ORDER BY 2 DESC
+```
+| Segment | governed answer |
+|---|---|
+| Independent | **41** |
+| Regional | **17** |
+| National Group | **12** |
+
+Correct distinct counts (`Active Customers (90d)` = `COUNT(DISTINCT customer_id) FILTER (WHERE order_date >= current_date()-90)`), matched against direct SQL.
+
+### #2 — "What is the average profit margin by segment?"
+Ground-truth governed answer (ratio-of-sums): Independent 20.66%, Regional 20.52%, National Group 20.18%.
+
+**WITHOUT** (base tables, naive `AVG(profit_margin_pct)` = average of per-product ratios):
 
 | Segment | margin % |
 |---|---|
@@ -106,14 +138,7 @@ Result — **average of per-product ratios** (statistically wrong / inconsistent
 | Regional | 20.42 |
 | Independent | 20.32 |
 
-### (b) WITH `sales_metrics` added as a source — governed metric view
-Genie generated a native `MEASURE()` query against the metric view:
-```sql
-SELECT `Segment`, try_divide(100 * MEASURE(`Total Profit`), MEASURE(`Total Revenue`)) AS margin_pct
-FROM vcr_serverless_catalog.shared_data.sales_metrics
-GROUP BY ALL ORDER BY margin_pct DESC
-```
-Result — **ratio of sums** (correct, matches ground truth):
+**WITH** `sales_metrics` (`try_divide(100*MEASURE(Total Profit), MEASURE(Total Revenue))` = ratio of sums):
 
 | Segment | margin % |
 |---|---|
@@ -121,15 +146,18 @@ Result — **ratio of sums** (correct, matches ground truth):
 | Regional | 20.52 |
 | National Group | 20.18 ← actually **least** profitable |
 
-### Why it matters
-The **ranking flips**. Naive avg-of-ratios makes National Group look like the best-margin
-segment; the governed metric view shows it is the **worst**. A wholesaler acting on the naive
-number would chase exactly the wrong segment. The metric view is a single governed definition
-reused identically by Genie, dashboards and SQL — and Genie consumes it natively via `MEASURE()`.
+The **ranking flips**: naive avg-of-ratios makes National Group look best; the governed view shows
+it is the **worst**. A wholesaler acting on the naive number would chase the wrong segment. (Absolute
+gap is small because the data is homogeneous — the *flip* is the teaching point.)
 
-> Nuance worth mentioning: with strong written instructions, Genie *can* compute ratio-of-sums
-> on the base tables too — but that depends on prompt phrasing and model choice. The metric view
-> makes the correct calculation **deterministic and governed**, not a matter of luck.
+### Why it matters
+A metric view is one governed definition reused identically by Genie, dashboards and SQL, and Genie
+consumes it natively via `MEASURE()`. WITHOUT it, naive NL→SQL either **double-counts** (#1) or
+**averages ratios** (#2) — and in #1 the error is large enough to be obviously wrong.
+
+> Nuance: with strong written instructions Genie *can* get the base-table calc right too, but that
+> depends on prompt phrasing and model choice. The metric view makes it **deterministic and governed**,
+> not a matter of luck.
 
 ---
 
@@ -137,6 +165,16 @@ reused identically by Genie, dashboards and SQL — and Genie consumes it native
 
 - **Genie spaces + Conversation API:** GA, fully working on this workspace (verified by every test above).
 - **Agent-style multi-step reasoning:** functionally working (the Scotland compound question).
-- **Named preview toggles** (Genie Agent mode, Genie Code) and the **Databricks One** business-user
-  entry point: confirm in the workspace UI (Settings → Previews, and open the space in Databricks One).
-  See the note in the team handover — these need a signed-in browser / workspace admin to verify.
+- **Named preview toggles** (Genie Agent mode, Genie Code): confirm in the workspace UI under
+  **Settings → Previews** — not exposed by any public API. Needs a signed-in browser / workspace admin.
+
+**Two entry points** (documented navigation; final label check pending UI sign-in):
+
+| Surface | Who | How to reach it |
+|---------|-----|-----------------|
+| **Genie space (builder)** | Builders / analysts | Workspace left nav → **Genie** → open *Northgate Provisions — Sales Analytics*. Direct URL: `/genie/rooms/<space_id>` (this space: `01f15d2bcc96149bbe3494375ce128a2`). Full builder chrome: edit Instructions, SQL examples, Monitoring. |
+| **Genie in Databricks One** | Business users | Open **Databricks One** (the simplified business-user home) → **Genie** → the same space, shared with the participant group. No SQL/builder chrome — just ask-and-answer. |
+
+> Both surfaces query the *same* space and the *same* governed tables/metric view; only the
+> chrome differs. The space is confirmed working via the API; the visual two-surface walk-through
+> still needs a signed-in browser.

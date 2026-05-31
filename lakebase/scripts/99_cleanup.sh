@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Practical 3 — Lakebase  •  Cleanup
+# Practical 3 - Lakebase  •  Cleanup
 # ---------------------------------------------------------------------------
 # Deletes the whole project (all branches, endpoints, data). The project name
-# stays reserved for a few minutes after deletion — use a fresh name next time.
+# stays reserved for a few minutes after deletion - use a fresh name next time.
 # ---------------------------------------------------------------------------
 set -euo pipefail
 PROJECT="${PROJECT:-workshop-scorecard}"

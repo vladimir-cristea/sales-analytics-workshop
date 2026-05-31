@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Practical 3 — Lakebase  •  Step 0: provision an Autoscaling project
+# Practical 3 - Lakebase  •  Step 0: provision an Autoscaling project
 # ---------------------------------------------------------------------------
 # Lakebase Autoscaling = managed PostgreSQL with Git-style branching, instant
 # point-in-time restore, scale-to-zero and read replicas. A "project" is the
@@ -8,7 +8,7 @@
 # read/write compute endpoint named `primary`.
 #
 # Prereqs: Databricks CLI >= 0.240, authenticated (`databricks auth login`).
-# GOTCHA: a deleted project/branch name stays reserved for several minutes —
+# GOTCHA: a deleted project/branch name stays reserved for several minutes -
 #         always provision with a FRESH name.
 # ---------------------------------------------------------------------------
 set -euo pipefail
@@ -26,7 +26,7 @@ databricks postgres get-project "projects/${PROJECT}" -o json \
 print("project:", d["name"]); \
 [print(" branch:", b["name"], "->", [e.get("status",{}).get("hosts",{}).get("host") for e in b.get("endpoints",[])]) for b in d.get("branches",[])]'
 
-# Tested result (build workspace, 2026-05-31):
+# Example output:
 #   project: projects/workshop-scorecard
 #   branch:  projects/workshop-scorecard/branches/production
 #            endpoint primary -> ep-spring-waterfall-XXXX.database.us-east-1.cloud.databricks.com

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # ---------------------------------------------------------------------------
-# Practical 3 — Lakebase  •  Load the gold scorecard into Postgres
+# Practical 3 - Lakebase  •  Load the gold scorecard into Postgres
 # ---------------------------------------------------------------------------
-# The PREFERRED workshop path is a Unity Catalog SYNCED TABLE (reverse ETL) —
+# The PREFERRED workshop path is a Unity Catalog SYNCED TABLE (reverse ETL) -
 # see ../synced_table/create_synced_table.sh. Synced tables require CREATE
 # CATALOG on the metastore to register the Lakebase-backed UC catalog.
 #
 # This script is the works-everywhere fallback: it reads the precomputed OLAP
 # table from Unity Catalog and bulk-loads it into Lakebase Postgres as a
-# point-lookup serving table. It tells the SAME story — "compute heavy
-# analytics in the lakehouse, serve them as fast OLTP lookups" — and runs as a
+# point-lookup serving table. It tells the SAME story - "compute heavy
+# analytics in the lakehouse, serve them as fast OLTP lookups" - and runs as a
 # normal Databricks (serverless) job, which is itself a legitimate reverse-ETL
 # pattern.
 #
@@ -51,7 +51,7 @@ CREATE TABLE public.customer_scorecard (
 
 df   = spark.table(SOURCE)                       # noqa: F821 (spark provided by runtime)
 cols = df.columns
-rows = [tuple(r) for r in df.collect()]          # 70 rows — small, fine to collect
+rows = [tuple(r) for r in df.collect()]          # 70 rows - small, fine to collect
 
 conn = psycopg2.connect(host=HOST, dbname="databricks_postgres",
                         user=USER, password=TOKEN, sslmode="require")
@@ -64,5 +64,5 @@ execute_values(cur,
 cur.execute("CREATE INDEX IF NOT EXISTS idx_scorecard_segment ON public.customer_scorecard(segment);")
 cur.execute("CREATE INDEX IF NOT EXISTS idx_scorecard_atrisk  ON public.customer_scorecard(at_risk_flag) WHERE at_risk_flag;")
 cur.execute("SELECT count(*) FROM public.customer_scorecard;")
-print("Loaded rows:", cur.fetchone()[0])         # tested: 70
+print("Loaded rows:", cur.fetchone()[0])         # expect: 70
 cur.close(); conn.close()

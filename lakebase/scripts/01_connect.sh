@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ---------------------------------------------------------------------------
-# Practical 3 — Lakebase  •  Connection helper (psql)
+# Practical 3 - Lakebase  •  Connection helper (psql)
 # ---------------------------------------------------------------------------
 # Lakebase authenticates with a short-lived (~1h) Databricks OAuth token used
 # as the Postgres password, over TLS (sslmode=require). The Postgres ROLE is
-# your Databricks identity (your email). NEVER hard-code a token — generate a
+# your Databricks identity (your email). NEVER hard-code a token - generate a
 # fresh one each session, as below. Nothing here is a secret at rest.
 #
 # Usage:

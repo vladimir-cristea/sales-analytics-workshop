@@ -1,12 +1,12 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC # Step 6 — Build the governed `sales_metrics` metric view
+-- MAGIC # Step 6 - Build the governed `sales_metrics` metric view
 -- MAGIC
 -- MAGIC Transparency copy of section 7b of `00_bootstrap`. A Unity Catalog **metric view**
 -- MAGIC (DBR 17.2+) that defines standardised sales KPIs in YAML over the clean `orders` fact,
--- MAGIC joined to `customers` and `products` — one governed source of truth shared by Genie,
+-- MAGIC joined to `customers` and `products` - one governed source of truth shared by Genie,
 -- MAGIC dashboards and SQL. Query it with `MEASURE(...)` (a plain `SELECT *` is not supported).
--- MAGIC Change the catalog if not on the build workspace.
+-- MAGIC Change the catalog to use your own.
 
 -- COMMAND ----------
 
@@ -56,7 +56,7 @@ $$;
 -- COMMAND ----------
 
 -- MAGIC %md
--- MAGIC ### Verify with a MEASURE() query — profit margin by segment
+-- MAGIC ### Verify with a MEASURE() query - profit margin by segment
 
 -- COMMAND ----------
 

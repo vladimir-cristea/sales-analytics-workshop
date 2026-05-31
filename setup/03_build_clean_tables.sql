@@ -1,9 +1,9 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC # Step 3 — Build the clean shared + summary tables
+-- MAGIC # Step 3 - Build the clean shared + summary tables
 -- MAGIC
 -- MAGIC Transparency copy of sections 5–6 of `00_bootstrap`. Loads from the committed
--- MAGIC `clean/` JSON in the volume. Change the catalog if not on the build workspace.
+-- MAGIC `clean/` JSON in the volume. Change the catalog to use your own.
 
 -- COMMAND ----------
 

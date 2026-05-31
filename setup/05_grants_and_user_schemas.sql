@@ -1,11 +1,11 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC # Step 5 — Participant grants (+ per-user schemas)
+-- MAGIC # Step 5 - Participant grants (+ per-user schemas)
 -- MAGIC
 -- MAGIC Transparency copy of section 8 of `00_bootstrap`. The bootstrap creates one scratch
 -- MAGIC schema **per participant** (driven by the `participant_users` widget) in Python; the
 -- MAGIC group grants below are the shared-data read access. Replace `workshop_participants`
--- MAGIC with your group name and change the catalog if not on the build workspace.
+-- MAGIC with your group name and change the catalog to use your own.
 -- MAGIC
 -- MAGIC **Prerequisite:** the group must exist (Settings → Identity and Access → Groups).
 

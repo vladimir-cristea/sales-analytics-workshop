@@ -1,5 +1,5 @@
 -- ============================================================================
--- GOLD LAYER — business metrics. THIS is where cross-entity JOINS happen.
+-- GOLD LAYER - business metrics. THIS is where cross-entity JOINS happen.
 -- ----------------------------------------------------------------------------
 -- Gold reads the clean, normalised silver tables, joins them, and aggregates
 -- into denormalised business tables. All four are materialized views (batch

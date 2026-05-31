@@ -1,5 +1,5 @@
 -- ============================================================================
--- SILVER LAYER — cleaned, validated, conformed. STILL NORMALISED: one table per
+-- SILVER LAYER - cleaned, validated, conformed. STILL NORMALISED: one table per
 -- entity, NO cross-entity joins (those live in gold).
 -- ----------------------------------------------------------------------------
 -- Data quality is enforced with SDP expectations:
@@ -11,7 +11,7 @@
 -- TABLES (incremental, append-only) reading from their bronze stream.
 --
 -- orders additionally needs DE-DUPLICATION on order_id. Picking one row per key
--- is a full-table window (ROW_NUMBER), which streaming queries don't support —
+-- is a full-table window (ROW_NUMBER), which streaming queries don't support -
 -- so silver_orders is a MATERIALIZED VIEW (batch recompute over bronze). This is
 -- the one place the layer is not a streaming table, and the dedup is the reason.
 -- ============================================================================

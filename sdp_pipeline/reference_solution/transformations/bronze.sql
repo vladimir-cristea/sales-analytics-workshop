@@ -1,5 +1,5 @@
 -- ============================================================================
--- BRONZE LAYER — raw, as-ingested, one streaming table per entity.
+-- BRONZE LAYER - raw, as-ingested, one streaming table per entity.
 -- ----------------------------------------------------------------------------
 -- Auto Loader (STREAM read_files) incrementally ingests the deliberately DIRTY
 -- raw JSON from the Unity Catalog volume. NO cleaning happens here: bronze is a

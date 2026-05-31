@@ -1,4 +1,4 @@
-# Reference solution — FACILITATOR ANSWER KEY (not for participants)
+# Reference solution - FACILITATOR ANSWER KEY (not for participants)
 
 > ⚠️ **This folder is the answer key.** Participants do **not** receive these files.
 > In Practical 2 they build their own bronze → silver → gold pipeline from scratch,
@@ -9,7 +9,7 @@
 
 A serverless **Spark Declarative Pipeline** that ingests the deliberately *dirty* raw
 JSON from a Unity Catalog volume, cleans and validates it with expectations, and produces
-four gold business tables. Verified GREEN on serverless.
+four gold business tables.
 
 ---
 
@@ -33,11 +33,11 @@ the reference never clobbers the shared clean tables).
 
 ## The medallion design (this is the structure the lab teaches)
 
-Joins are deferred to **gold**. Silver stays normalised — one clean table per entity, no
+Joins are deferred to **gold**. Silver stays normalised - one clean table per entity, no
 cross-entity joins. This is deliberate: it keeps each silver expectation about a single
 entity, and concentrates all the join logic in one layer.
 
-### BRONZE — raw, as-ingested (streaming tables, Auto Loader)
+### BRONZE - raw, as-ingested (streaming tables, Auto Loader)
 | Table | Notes |
 |-------|-------|
 | `bronze_customers` | `STREAM read_files(... customers/)`, `schemaHints 'customer_id INT, join_date DATE'` |
@@ -47,12 +47,12 @@ entity, and concentrates all the join logic in one layer.
 No cleaning. Each row gets `_ingested_at` and `_source_file` metadata. Dirt is kept on
 purpose so silver has something to drop.
 
-### SILVER — cleaned, validated, conformed, still normalised (one per entity, no joins)
+### SILVER - cleaned, validated, conformed, still normalised (one per entity, no joins)
 Expectations use `CONSTRAINT <name> EXPECT (<predicate>) ON VIOLATION DROP ROW`.
 
 | Table | Type | Expectations (all `DROP ROW`) | Intrinsic columns added |
 |-------|------|-------------------------------|--------------------------|
-| `silver_customers` | streaming table | `customer_id IS NOT NULL`; `region IN (<11 valid UK regions>)`; `segment <> 'TEST'`; `customer_name NOT ILIKE '%test%'` | — |
+| `silver_customers` | streaming table | `customer_id IS NOT NULL`; `region IN (<11 valid UK regions>)`; `segment <> 'TEST'`; `customer_name NOT ILIKE '%test%'` | - |
 | `silver_products`  | streaming table | `product_id IS NOT NULL`; `list_price > 0` | `margin_pct = 100*(list_price-cost)/list_price` |
 | `silver_orders`    | **materialized view** | `order_id/customer_id/product_id IS NOT NULL`; `quantity > 0`; `discount_pct BETWEEN 0 AND 100`; `order_date <= current_date()` | `revenue = quantity*unit_price*(1-discount_pct/100)` |
 
@@ -61,9 +61,9 @@ Expectations use `CONSTRAINT <name> EXPECT (<predicate>) ON VIOLATION DROP ROW`.
 Picking one row per key needs a full-table window (`ROW_NUMBER() OVER (PARTITION BY
 order_id ...)`), which Spark streaming queries do not support. customers and products are
 pure row-level filters, so they remain streaming tables. This mixed pattern is a genuine,
-teachable engineering reason — Genie Code surfaces the same trade-off.
+teachable engineering reason - Genie Code surfaces the same trade-off.
 
-### GOLD — business metrics, **joins live here** (materialized views)
+### GOLD - business metrics, **joins live here** (materialized views)
 ```
 line revenue = quantity * unit_price * (1 - discount_pct/100)   -- already in silver_orders
 line profit  = revenue - quantity * products.cost               -- needs the join to products
@@ -83,19 +83,19 @@ order in 30+ days" (> 2× the normal cadence) is the at-risk signal. Returns 9 c
 
 ## How to run (facilitator)
 
-**Option A — MCP / databricks-spark-declarative-pipelines skill (used to build this):**
+**Option A - MCP / databricks-spark-declarative-pipelines skill (used to build this):**
 1. Upload `transformations/` to a workspace folder.
 2. `manage_pipeline(action="create_or_update", name="northgate_sdp_reference",
    catalog="vcr_serverless_catalog", schema="pipeline_ref",
    workspace_file_paths=[bronze.sql, silver.sql, gold.sql], start_run=True, full_refresh=True)`.
 
-**Option B — UI:** Workspace → New → Lakeflow Declarative Pipeline → serverless →
+**Option B - UI:** Workspace → New → Lakeflow Declarative Pipeline → serverless →
 add the three SQL files as source → set default catalog `vcr_serverless_catalog`,
 schema `pipeline_ref` → **Run (full refresh)**.
 
 ---
 
-## Verified results (full refresh, serverless, ~60s)
+## Expected results (full refresh, serverless)
 
 | Layer | Table | Rows | Check |
 |-------|-------|-----:|-------|
@@ -109,19 +109,19 @@ schema `pipeline_ref` → **Run (full refresh)**.
 | gold | `gold_at_risk_customers` | 9 | no order in last 30 days |
 
 Silver products and orders match the clean reference counts exactly (34 products,
-2,200 orders). Silver customers come out at **64 — six fewer than the 70 clean
-customers** — because the invalid-region rule drops 6 dimension rows (ids 3, 11, 19, 27,
+2,200 orders). Silver customers come out at **64 - six fewer than the 70 clean
+customers** - because the invalid-region rule drops 6 dimension rows (ids 3, 11, 19, 27,
 38, 52). That is not a miscount: it is exactly the orphaned-facts teaching point below,
 and it is why customer-level gold is lower than product-level gold.
 
-### Cross-check vs the independent clean tables — and a key teaching point
+### Cross-check vs the independent clean tables - and a key teaching point
 Rolling the gold layer back up and comparing to totals computed directly from the clean
 `shared_data` tables:
 
-- **`gold_product_performance` matches the clean truth** — £871,821.82 revenue over 2,200
+- **`gold_product_performance` matches the clean truth** - £871,821.82 revenue over 2,200
   lines (vs £871,821.43; the few-pence delta is per-line rounding of `revenue` in silver).
   No *real* product was corrupted, so every order line joins to a product.
-- **`gold_customer_sales_summary` is intentionally lower** — 1,998 lines, £793,959.93.
+- **`gold_customer_sales_summary` is intentionally lower** - 1,998 lines, £793,959.93.
   The missing **202 lines / £77,861.81** belong to the **6 customers (ids 3, 11, 19, 27,
   38, 52) whose `region` was corrupted** in the raw feed. Silver correctly drops those
   customer rows, so the inner join in customer/rep gold legitimately excludes their

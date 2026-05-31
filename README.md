@@ -27,9 +27,11 @@ create the group and re-run to apply them. See [`setup/README.md`](setup/README.
 - A Databricks workspace with Unity Catalog and serverless compute enabled.
 - A serverless SQL warehouse, with `CAN USE` granted to the participant group.
 - An account-level group named `workshop_participants` containing all attendee emails.
-- Permission to create a catalog, or an existing catalog you can build into. The scripts
-  default to the example catalog `workshop`; change it to your own. The bootstrap has a
-  documented cell for creating a fresh catalog if you need one.
+- A Unity Catalog catalog to build into. The scripts default to an example catalog named
+  `workshop`. On a brand-new workspace, set the bootstrap's `create_catalog` widget to
+  `true` on the first run (this needs the `CREATE CATALOG` privilege), or create the catalog
+  beforehand. To use a catalog you already have, point the `catalog` widget at it and leave
+  `create_catalog` as `false`.
 
 Each participant needs a Databricks account in the `workshop_participants` group and a modern
 web browser. There is no local install and no per-participant setup.

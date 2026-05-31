@@ -60,7 +60,7 @@ nothing to download, nothing to bring. There is zero per-participant setup.
 |------------------|--------------------------------------------------------------------------|
 | `setup/`         | Idempotent bootstrap notebook + thin per-step scripts (schema, volume, tables, scorecard, `sales_metrics` metric view, grants). |
 | `data/`          | Deterministic dataset generator + committed CLEAN and RAW DIRTY JSON, plus the data dictionary and seeded DQ-issue list. |
-| `sdp_pipeline/`  | Reference Spark Declarative Pipeline (bronze → silver → gold) for practical 2. |
+| `sdp_pipeline/`  | Practical 2 brief: build the medallion pipeline (bronze → silver → gold) yourself with Genie Code. |
 | `lakebase/`      | Lakebase provisioning, sync of `gold_customer_scorecard`, and branch/PITR/Data API exercises. |
 | `genie/`         | Genie space definition, instructions, and example questions for practical 1. |
 | `slides/`        | Workshop slides / exercise walkthrough content.                          |

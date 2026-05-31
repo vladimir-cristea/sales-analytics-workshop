@@ -21,14 +21,20 @@ The whole environment is provisioned by importing this repo and running a single
 bootstrap notebook — **no manual data upload**. The committed raw JSON files are copied
 from the imported repo path straight into a Unity Catalog volume by the bootstrap itself.
 
-1. **Import this repo** into the Databricks workspace
+1. **Create the participant group first.** Go to *Settings → Identity and Access →
+   Groups*, create a group named **`workshop_participants`**, and add every attendee's
+   email to it. _(This is the only manual prerequisite — do it before running the
+   bootstrap so the access grants apply. If you forget, the bootstrap still completes and
+   just skips the group grants; create the group and re-run to apply them.)_
+2. **Import this repo** into the Databricks workspace
    (*Workspace → Create → Git folder →* paste the repo URL).
-2. **Open `setup/00_bootstrap`** and click **Run all**.
-3. Done. The bootstrap is idempotent — safe to re-run.
+3. **Open `setup/00_bootstrap`** and click **Run all**.
+4. Done. The bootstrap is idempotent — safe to re-run.
 
 The bootstrap creates the schema and UC volume, lands the raw JSON, builds the clean
-shared tables, builds the heavy-OLAP `gold_customer_scorecard`, and grants access to the
-participant group. See [`setup/README.md`](setup/README.md) for details and the
+shared tables, builds the heavy-OLAP `gold_customer_scorecard` and the governed
+`sales_metrics` metric view, creates a scratch schema per participant, and grants the
+group read access to it all. See [`setup/README.md`](setup/README.md) for details and the
 documented catalog-creation cell for a customer's own workspace.
 
 ---
@@ -37,8 +43,9 @@ documented catalog-creation cell for a customer's own workspace.
 
 - A Databricks workspace with **Unity Catalog** and **serverless** compute enabled.
 - A **SQL warehouse** (serverless). Grant `CAN USE` to the participant group.
-- A **participant group** (default name `workshop_participants`) containing all attendee
-  emails. Create via *Settings → Identity and Access → Groups*.
+- A **participant group** named **`workshop_participants`** containing all attendee
+  emails (*Settings → Identity and Access → Groups*). **This is the only manual setup
+  step** — create it before running the bootstrap (see step 1 above).
 - Permission to create a catalog (or an existing catalog you can build into). On the
   build workspace we use `vcr_serverless_catalog`; the bootstrap has a documented cell
   for creating a fresh catalog on the customer's workspace.
@@ -49,7 +56,7 @@ documented catalog-creation cell for a customer's own workspace.
 
 | Path             | Contents                                                                 |
 |------------------|--------------------------------------------------------------------------|
-| `setup/`         | Idempotent bootstrap notebook + thin per-step scripts (schema, volume, tables, scorecard, grants). |
+| `setup/`         | Idempotent bootstrap notebook + thin per-step scripts (schema, volume, tables, scorecard, `sales_metrics` metric view, grants). |
 | `data/`          | Deterministic dataset generator + committed CLEAN and RAW DIRTY JSON, plus the data dictionary and seeded DQ-issue list. |
 | `sdp_pipeline/`  | Reference Spark Declarative Pipeline (bronze → silver → gold) for practical 2. |
 | `lakebase/`      | Lakebase provisioning, sync of `gold_customer_scorecard`, and branch/PITR/Data API exercises. |

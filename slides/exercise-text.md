@@ -40,7 +40,7 @@ optional Bonus at the end.
 > _Facilitator note: this practical uses three Genie spaces - the curated "Northgate
 > Provisions - Sales Analytics" (Parts 1-6) and two A/B spaces, "Northgate Provisions - Base
 > Only (no context)" and "Northgate Provisions - Metric View Comparison" (Parts 4 and 7).
-> Have all three open before the session._
+> Have all three open before the session (search by name, or share the direct links)._
 
 ### Part 1: Get your bearings
 

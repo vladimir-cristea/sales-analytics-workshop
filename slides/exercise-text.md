@@ -340,62 +340,110 @@ a live app that needs one customer's scorecard *right now*. **Lakebase** is mana
 Postgres built into Databricks: you sync a gold table to it and get millisecond point
 lookups, plus database superpowers like instant branching and point-in-time recovery.
 
-We have pre-computed a heavy per-customer table, `gold_customer_scorecard` (rolling
-12-month revenue, RFM scores, at-risk flag, peer percentile ranks, cross-sell pick), and
-synced it to Lakebase for you.
+The bootstrap built a heavy per-customer table, `gold_customer_scorecard` (rolling 12-month
+revenue, RFM scores, at-risk flag, peer percentile ranks, cross-sell pick). Your facilitator
+has already provisioned the Lakebase project **`workshop-scorecard`** (Postgres 17) and your
+personal Postgres role. In this lab you will sync that scorecard into Postgres and put it to
+work.
 
 **Your Task:** work through the tiers below. Get the must-do done first, then go as far as
-time allows.
+time allows. You will use the database **`databricks_postgres`** throughout.
 
-### Part 1: Query the scorecard from Postgres (must-do)
+### Part 1: Sync the scorecard into Lakebase (must-do)
 
-1. Open the Lakebase instance and its SQL editor / query surface.
-2. Run a **point lookup** for a single customer, for example:
+Create a **synced table** from your gold scorecard in Unity Catalog into Postgres. The
+easiest way is Catalog Explorer: find your scorecard table → **Create → Synced table** →
+target the `workshop-scorecard` instance and database `databricks_postgres` (there is also a
+one-line CLI command if you prefer). It lands as `<your_schema>.<your_table>`.
+
+💡 If your own sync is still building, you can use the shared fallback that is already there:
+`shared_data.customer_scorecard_synced`.
+
+### Part 2: Query the scorecard from Postgres (must-do)
+
+1. Open the query surface: left nav → **Compute → Database instances → `workshop-scorecard`**
+   → the **SQL editor** tab.
+2. Run a **point lookup** for a single customer:
 
    ```sql
-   SELECT customer_id, customer_name, segment,
-          r12_revenue, at_risk_flag, cross_sell_product_name
-   FROM gold_customer_scorecard
-   WHERE customer_id = 1;
+   SELECT customer_id, customer_name, region, segment,
+          lifetime_revenue, r12_revenue, rfm_cell, at_risk_flag, cross_sell_product_name
+   FROM   shared_data.customer_scorecard_synced   -- or your own <schema>.<table>
+   WHERE  customer_id = 42;
    ```
-3. Try a few different `customer_id` values. Notice how fast a single-row lookup comes
-   back - this is the OLTP serving pattern, not analytics.
+   You should get back: **42 | The Bell Bistro | North East | National Group | 12701.01 |
+   10417.51 | R2F5M4 | true | Mature Cheddar 5kg**.
+3. Try a few other `customer_id` values (1-70). Each single-row lookup comes back instantly.
 
-💡 This is the same data you could compute in Spark, but served from Postgres it returns
-in milliseconds and scales to thousands of concurrent app users.
+💡 That one row was computed with heavy OLAP (RFM, rolling-12-month, cross-sell affinity),
+but Postgres serves it as a sub-millisecond primary-key lookup - run `EXPLAIN` on the query
+and you will see an Index Scan on the `customer_id` key (~0.02 ms). This is the OLTP serving
+pattern: precompute the hard stuff in the lakehouse, serve it hot from Lakebase to thousands
+of concurrent app users.
 
-### Part 2: Create a branch (must-do)
+💡 Prefer the command line? Connect with `psql` using your Databricks identity as the
+Postgres role and a short-lived token as the password:
+```
+EP=projects/workshop-scorecard/branches/production/endpoints/primary
+export PGPASSWORD=$(databricks postgres generate-database-credential "$EP" -o json \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+HOST=$(databricks postgres get-endpoint "$EP" -o json \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["status"]["hosts"]["host"])')
+psql "host=$HOST dbname=databricks_postgres user=<you>@your-company.com sslmode=require"
+```
 
-Lakebase can branch the whole database instantly, like Git for your data.
+### Part 3: Create a branch (must-do)
 
-1. Create a **branch** of the database from the Lakebase UI.
-2. On the branch, make a change (update or delete a row).
-3. Confirm the original (parent) is untouched.
+Lakebase can branch the whole database instantly - copy-on-write, like Git for your data.
 
-💡 Branching gives every developer a full, isolated copy in seconds with no data copy
-cost - perfect for testing a migration or a risky change safely.
+1. Create a **branch** off `production`:
+   ```
+   databricks postgres create-branch projects/workshop-scorecard dev-experiment \
+     --json '{"spec":{"source_branch":"projects/workshop-scorecard/branches/production","ttl":"86400s"}}'
+   ```
+2. The branch gets its **own endpoint host** - reconnect to it (same token flow as above),
+   then change a row (`UPDATE` or `DELETE`).
+3. Query `production` again and confirm it is untouched. Your edit is isolated to the branch.
 
-### Part 3: Point-in-time recovery (near-must)
+💡 Branching gives every developer a full, isolated copy in seconds with no data-copy cost -
+perfect for testing a migration or a risky change safely.
 
-1. Note the current time, then make a destructive change (for example delete several
-   rows).
-2. Use **point-in-time recovery** to restore the database to just before that change.
-3. Confirm the rows are back.
+### Part 4: Point-in-time recovery (near-must)
 
-💡 PITR means "oops" is recoverable. You can rewind the database to any moment in its
-retention window.
+1. Capture the current time, then make a destructive change on a branch (for example delete
+   several rows).
+2. Restore by branching *from the past* - point `source_branch_time` at your captured
+   timestamp:
+   ```
+   databricks postgres create-branch projects/workshop-scorecard pitr-recover \
+     --json '{"spec":{"source_branch":"projects/workshop-scorecard/branches/production","source_branch_time":"<your-timestamp, e.g. 2026-05-31T20:18:05Z>","ttl":"86400s"}}'
+   ```
+3. Connect to `pitr-recover` and confirm the rows are back as they were at that instant.
+
+💡 PITR means "oops" is recoverable: you can rewind to any moment inside the retention
+window, served as a fresh branch you can inspect before promoting.
 
 ### Bonus / optional (if you finish early)
 
 Pick whichever interests you:
 
-- **Data API.** Hit the scorecard over Lakebase's REST Data API instead of SQL - the path
-  an application would actually use.
-- **Scale to zero.** Find the instance's scale-to-zero setting and see how it idles down to
-  save cost, then wakes on the next query.
-- **Read replica.** Add a read replica and understand when you would route reads to it.
-- **CDC back to Delta.** Discuss / try streaming changes made in Lakebase back into a Delta
-  table in Unity Catalog, closing the loop between OLTP and the lakehouse.
+- **Read replica** (works today). Add a read-only endpoint and confirm reads succeed but
+  writes are rejected:
+  ```
+  databricks postgres create-endpoint projects/workshop-scorecard/branches/production ro-replica \
+    --json '{"spec":{"endpoint_type":"ENDPOINT_TYPE_READ_ONLY"}}'
+  ```
+- **Scale to zero** (config). Set `suspend_timeout_duration` on an endpoint; compute
+  auto-suspends after idle and wakes on the next connection. Great for cost on bursty apps.
+- **Data API** (enable in the UI). Project → **Data API** page → **Enable**, then hit it
+  over REST - the path an application would actually use:
+  ```
+  curl -H "Authorization: Bearer $TOKEN" \
+    "$REST_ENDPOINT/shared_data/customer_scorecard_synced?customer_id=eq.42"
+  ```
+- **CDC back to Delta** (preview). Streaming changes made in Lakebase back into a Delta table
+  in Unity Catalog closes the loop between OLTP and the lakehouse - one to watch as it comes
+  out of preview.
 
 💡 Ask the facilitator which of these are enabled on the day; some are quick to show, others
 are discussion-only.

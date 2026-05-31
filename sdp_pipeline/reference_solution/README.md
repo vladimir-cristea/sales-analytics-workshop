@@ -108,8 +108,11 @@ schema `pipeline_ref` → **Run (full refresh)**.
 | gold | `gold_rep_performance` | 7 | one per account manager |
 | gold | `gold_at_risk_customers` | 9 | no order in last 30 days |
 
-Every silver count lands exactly on the clean reference counts (70−6=64 customers,
-34 products, 2200 orders), confirming the expectations drop precisely the seeded dirt.
+Silver products and orders match the clean reference counts exactly (34 products,
+2,200 orders). Silver customers come out at **64 — six fewer than the 70 clean
+customers** — because the invalid-region rule drops 6 dimension rows (ids 3, 11, 19, 27,
+38, 52). That is not a miscount: it is exactly the orphaned-facts teaching point below,
+and it is why customer-level gold is lower than product-level gold.
 
 ### Cross-check vs the independent clean tables — and a key teaching point
 Rolling the gold layer back up and comparing to totals computed directly from the clean

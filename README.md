@@ -1,11 +1,8 @@
 # Sales Analytics Workshop
 
-Generates a synthetic single-company B2B food & beverage sales dataset (fictional
+Generates a synthetic B2B food & beverage sales dataset (fictional
 **Northgate Provisions Co.**) and provides Databricks workshop materials for three topics:
 Genie, Spark Declarative Pipelines (SDP), and Lakebase.
-
-The exercise instructions participants follow live in the facilitator's slide deck, not in
-this repo.
 
 ## Setup
 
@@ -22,7 +19,7 @@ bootstrap, so there is no manual data upload.
 If the group does not exist when the bootstrap runs, it completes and skips the group grants;
 create the group and re-run to apply them. See [`setup/README.md`](setup/README.md) for detail.
 
-Lakebase (Practical 3) is provisioned by default; set `provision_lakebase=false` to skip the
+Lakebase is provisioned by default; set `provision_lakebase=false` to skip the
 Lakebase lab. The step degrades gracefully: if Lakebase is not enabled on the workspace, the
 bootstrap prints a warning and carries on, leaving the rest of the environment intact.
 

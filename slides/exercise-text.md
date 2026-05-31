@@ -185,7 +185,11 @@ Create one bronze table per entity (`bronze_customers`, `bronze_products`,
 yet.** Bronze is the faithful, unaltered copy of what landed.
 
 💡 Ask Genie Code for an "Auto Loader streaming table" reading the volume path. If you get
-stuck on schema inference, ask it to infer the schema or add schema hints.
+stuck on schema inference, ask it to infer the schema or add schema hints. A nice touch is
+to stamp each row with where and when it landed (`_ingested_at`, `_source_file`).
+
+You should land roughly **81 customers, 37 products, 2,261 orders** in bronze - more than
+the clean counts, because the dirt is still in.
 
 ### Part 2: Silver - clean, validate and de-duplicate
 
@@ -215,6 +219,15 @@ yet). Enforce these data-quality rules - drop or quarantine anything that fails:
 (`CONSTRAINT ... EXPECT (...) ON VIOLATION DROP ROW`). That way the rules are declarative
 and the pipeline reports how many rows each rule dropped.
 
+💡 The customers and products rules are pure row filters, so those silver tables can stay
+**streaming tables**. De-duplicating orders is different: picking one row per `order_id`
+needs a window function over the whole table, which a streaming query cannot do. So
+`silver_orders` is best built as a **materialized view**. If Genie Code's first attempt
+errors on the de-dup, that is why - ask it to make that table a materialized view.
+
+You should end up with roughly **64 customers, 34 products, 2,200 orders** in silver -
+exactly the clean reference counts, which is the sign your rules caught all the dirt.
+
 ⚠️ Resist the urge to join here. Silver stays one-table-per-entity. Joining is gold's job
 - it keeps each layer single-purpose and easy to debug.
 
@@ -222,19 +235,32 @@ and the pipeline reports how many rows each rule dropped.
 
 Now bring the silver tables together and aggregate. Join `silver_orders` to
 `silver_customers` and `silver_products` (you need `products.cost` for profit, and the
-customer dimensions like region, segment and account manager for grouping), then build
-gold tables such as:
+customer dimensions like region, segment and account manager for grouping). These gold
+tables are usually best as **materialized views**. Build:
 
-- a **per-customer sales summary** (revenue, profit, order count),
-- a **per-product performance** table,
-- a **per-account-manager** roll-up.
+- **`gold_customer_sales_summary`** - per customer: revenue, profit, margin, units, first
+  and last order date.
+- **`gold_product_performance`** - per product: units sold, unique customers, revenue,
+  profit, margin.
+- **`gold_rep_performance`** - per account manager: revenue, profit, margin, average order
+  value, number of customers.
+- **`gold_at_risk_customers`** - customers with no order in the last 30 days (against the
+  dataset's "today" of 2026-05-31). Outlets reorder roughly fortnightly, so 30 days is
+  more than twice their normal cadence - a fair "gone quiet" signal.
 
 Line revenue = `quantity * unit_price * (1 - discount_pct/100)`.
-Line profit = revenue − `quantity * cost`.
+Line profit  = revenue - `quantity * cost`.
 
-✅ **Did it work?** Spot-check a gold number against Practical 1. Your gold per-product
-revenue should line up with what Genie told you for the same product from the clean
-tables. If the totals are close, your cleaning was sound.
+✅ **Did it work?** A few numbers to check against: **34** products in
+`gold_product_performance`, **7** account managers in `gold_rep_performance`, and **9**
+at-risk customers. Your total product revenue should come to about **£871,821** across
+2,200 order lines - matching what Genie gives you from the clean tables in Practical 1.
+
+💡 **Spot the subtlety.** Your per-product gold totals match the clean reference exactly,
+but your per-*customer* totals will be slightly lower. Why? Silver dropped 6 customers with
+corrupted region values, and dropping those dimension rows orphaned their (perfectly good)
+order lines from the customer join. That is the classic trade-off between *dropping* a bad
+row and *quarantining or repairing* it - worth a thought for real pipelines.
 
 ### Bonus (if you finish early)
 

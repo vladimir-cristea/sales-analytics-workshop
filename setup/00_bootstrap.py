@@ -530,14 +530,27 @@ else:
 
         # 1) Get-or-create the project (idempotent). Lakebase Autoscaling lives under the
         #    /api/2.0/postgres/* surface; create-project takes project_id as a query param.
-        try:
-            existing = api.do("GET", f"/api/2.0/postgres/{proj_path}")
-            print(f"✅ Reusing existing Lakebase project {existing.get('name', proj_path)}")
-        except Exception:
-            api.do("POST", "/api/2.0/postgres/projects",
-                   query={"project_id": LAKEBASE_PROJECT},
-                   body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
-            print(f"✅ Created Lakebase project {proj_path}")
+        #    Check existence with LIST, not GET: a deleted name stays reserved for several
+        #    minutes and a GET still resolves the tombstone, which would fool a GET-based
+        #    check into "reusing" a project that is actually gone (every downstream role/grant
+        #    call then fails with "project not found"). LIST excludes the tombstone.
+        _resp = api.do("GET", "/api/2.0/postgres/projects") or {}
+        _live = _resp.get("projects", _resp) if isinstance(_resp, dict) else _resp
+        _live_names = {p.get("name") for p in (_live or []) if isinstance(p, dict)}
+        if proj_path in _live_names:
+            print(f"✅ Reusing existing Lakebase project {proj_path}")
+        else:
+            try:
+                api.do("POST", "/api/2.0/postgres/projects",
+                       query={"project_id": LAKEBASE_PROJECT},
+                       body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
+                print(f"✅ Created Lakebase project {proj_path}")
+            except Exception as ce:
+                raise RuntimeError(
+                    f"Could not create Lakebase project '{LAKEBASE_PROJECT}'. If you recently "
+                    f"deleted a project with this name, the name stays reserved for several "
+                    f"minutes - set the `lakebase_project` widget to a fresh name and re-run. "
+                    f"Detail: {str(ce)[:160]}")
 
         # 2) Confirm the default database. The project ships with `databricks_postgres`,
         #    which is sufficient for the synced-table target - nothing to create.
@@ -545,7 +558,22 @@ else:
               "no database creation needed.")
 
         # 3) Grant the participant group the permission set needed to branch + sync.
+        #    Check the group exists FIRST: the permissions API does NOT validate the principal,
+        #    so a CAN_MANAGE grant to a non-existent group "succeeds" and stores a dangling ACL
+        #    entry, falsely reporting that participants can branch. (The UC GRANTs in section 8
+        #    error on a missing group; this API does not, so we check explicitly here.)
         try:
+            _grp_exists = bool(list(w.groups.list(filter=f'displayName eq "{PARTICIPANTS_GROUP}"')))
+        except Exception:
+            _grp_exists = False
+        if not _grp_exists:
+            print(f"⚠️  Group `{PARTICIPANTS_GROUP}` not found - skipping the Lakebase role + "
+                  f"CAN_MANAGE grant. Create it as an account-level group, assign it to this "
+                  f"workspace and add participants, then re-run this cell so they can create "
+                  f"their own branch + sync. (Solo run: you already own the project, so you can "
+                  f"branch without this.)")
+        else:
+          try:
             # (a) ONE group Postgres role on the production branch (COW branches inherit it).
             #     Use the role API, NOT raw SQL CREATE ROLE (raw SQL leaves NO_LOGIN, OAuth fails).
             try:
@@ -565,7 +593,7 @@ else:
                        {"group_name": PARTICIPANTS_GROUP, "permission_level": "CAN_MANAGE"}]})
             print(f"✅ Granted CAN_MANAGE on project to group `{PARTICIPANTS_GROUP}` "
                   f"(enables each participant to create their own branch)")
-        except Exception as e:
+          except Exception as e:
             print(f"⚠️  Lakebase group grants skipped - does account-level group "
                   f"`{PARTICIPANTS_GROUP}` exist? Detail: {str(e)[:180]}")
 

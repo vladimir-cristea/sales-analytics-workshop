@@ -558,7 +558,22 @@ else:
               "no database creation needed.")
 
         # 3) Grant the participant group the permission set needed to branch + sync.
+        #    Check the group exists FIRST: the permissions API does NOT validate the principal,
+        #    so a CAN_MANAGE grant to a non-existent group "succeeds" and stores a dangling ACL
+        #    entry, falsely reporting that participants can branch. (The UC GRANTs in section 8
+        #    error on a missing group; this API does not, so we check explicitly here.)
         try:
+            _grp_exists = bool(list(w.groups.list(filter=f'displayName eq "{PARTICIPANTS_GROUP}"')))
+        except Exception:
+            _grp_exists = False
+        if not _grp_exists:
+            print(f"⚠️  Group `{PARTICIPANTS_GROUP}` not found - skipping the Lakebase role + "
+                  f"CAN_MANAGE grant. Create it as an account-level group, assign it to this "
+                  f"workspace and add participants, then re-run this cell so they can create "
+                  f"their own branch + sync. (Solo run: you already own the project, so you can "
+                  f"branch without this.)")
+        else:
+          try:
             # (a) ONE group Postgres role on the production branch (COW branches inherit it).
             #     Use the role API, NOT raw SQL CREATE ROLE (raw SQL leaves NO_LOGIN, OAuth fails).
             try:
@@ -578,7 +593,7 @@ else:
                        {"group_name": PARTICIPANTS_GROUP, "permission_level": "CAN_MANAGE"}]})
             print(f"✅ Granted CAN_MANAGE on project to group `{PARTICIPANTS_GROUP}` "
                   f"(enables each participant to create their own branch)")
-        except Exception as e:
+          except Exception as e:
             print(f"⚠️  Lakebase group grants skipped - does account-level group "
                   f"`{PARTICIPANTS_GROUP}` exist? Detail: {str(e)[:180]}")
 

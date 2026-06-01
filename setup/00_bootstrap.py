@@ -530,14 +530,27 @@ else:
 
         # 1) Get-or-create the project (idempotent). Lakebase Autoscaling lives under the
         #    /api/2.0/postgres/* surface; create-project takes project_id as a query param.
-        try:
-            existing = api.do("GET", f"/api/2.0/postgres/{proj_path}")
-            print(f"✅ Reusing existing Lakebase project {existing.get('name', proj_path)}")
-        except Exception:
-            api.do("POST", "/api/2.0/postgres/projects",
-                   query={"project_id": LAKEBASE_PROJECT},
-                   body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
-            print(f"✅ Created Lakebase project {proj_path}")
+        #    Check existence with LIST, not GET: a deleted name stays reserved for several
+        #    minutes and a GET still resolves the tombstone, which would fool a GET-based
+        #    check into "reusing" a project that is actually gone (every downstream role/grant
+        #    call then fails with "project not found"). LIST excludes the tombstone.
+        _resp = api.do("GET", "/api/2.0/postgres/projects") or {}
+        _live = _resp.get("projects", _resp) if isinstance(_resp, dict) else _resp
+        _live_names = {p.get("name") for p in (_live or []) if isinstance(p, dict)}
+        if proj_path in _live_names:
+            print(f"✅ Reusing existing Lakebase project {proj_path}")
+        else:
+            try:
+                api.do("POST", "/api/2.0/postgres/projects",
+                       query={"project_id": LAKEBASE_PROJECT},
+                       body={"spec": {"display_name": "Workshop Customer Scorecard", "pg_version": "17"}})
+                print(f"✅ Created Lakebase project {proj_path}")
+            except Exception as ce:
+                raise RuntimeError(
+                    f"Could not create Lakebase project '{LAKEBASE_PROJECT}'. If you recently "
+                    f"deleted a project with this name, the name stays reserved for several "
+                    f"minutes - set the `lakebase_project` widget to a fresh name and re-run. "
+                    f"Detail: {str(ce)[:160]}")
 
         # 2) Confirm the default database. The project ships with `databricks_postgres`,
         #    which is sufficient for the synced-table target - nothing to create.

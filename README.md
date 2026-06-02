@@ -43,7 +43,6 @@ web browser. There is no local install and no per-participant setup.
 |-----------------|--------------------------------------------------------------------------|
 | `setup/`        | Idempotent bootstrap notebook plus thin per-step scripts (schema, volume, tables, scorecard, metric view, grants). |
 | `data/`         | Deterministic dataset generator plus committed clean and raw (dirty) JSON, with the schema and seeded data-quality list. |
-| `genie/`        | Optional reference Genie space definitions (the practical has participants build their own space). |
 | `sdp_pipeline/` | Pointer for the Spark Declarative Pipelines topic (built live with Genie Code). |
 | `lakebase/`     | Lakebase facilitator setup (provisioned by default; group grants) plus the participant flow: create your own branch, sync `gold_customer_scorecard` into it, point-lookup queries, and PITR. |
 

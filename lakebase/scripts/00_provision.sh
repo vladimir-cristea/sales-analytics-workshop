@@ -5,8 +5,7 @@
 # FACILITATOR-ONLY. setup/00_bootstrap with provision_lakebase=true already does
 # this (and grants the group). Run this script only if you prefer the manual CLI
 # route or are setting up outside the bootstrap. Participants do NOT run this -
-# they create their own branch (scripts/03_branch_demo.sh) on the project you
-# provision here.
+# they create their own branch in the UI on the project you provision here.
 #
 # Lakebase Autoscaling = managed PostgreSQL with Git-style branching, instant
 # point-in-time restore, scale-to-zero and read replicas. A "project" is the

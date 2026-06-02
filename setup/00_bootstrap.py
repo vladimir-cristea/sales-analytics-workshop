@@ -10,7 +10,7 @@
 # MAGIC 2. create the `shared_data` schema and a UC volume,
 # MAGIC 3. **copy the committed raw + clean JSON from this imported repo into the volume**
 # MAGIC    (no manual upload),
-# MAGIC 4. build the CLEAN shared tables (`customers`, `products`, `orders`) and two summary tables,
+# MAGIC 4. build the CLEAN shared tables (`customers`, `products`, `orders`),
 # MAGIC 5. build the heavy-OLAP `gold_customer_scorecard` (point-lookup keyed by `customer_id`),
 # MAGIC 6. create per-user schemas and grant access to the participant group,
 # MAGIC 7. verify everything landed (row counts + volume file listing).
@@ -220,49 +220,7 @@ print("✅ customers, products, orders built")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 6. Build the summary tables (pre-aggregated for Genie)
-
-# COMMAND ----------
-
-spark.sql(f"""
-CREATE OR REPLACE TABLE {CATALOG}.{SCHEMA}.product_performance_summary
-COMMENT 'Per-product performance (clean, pre-aggregated for Genie)' AS
-SELECT
-  p.product_id, p.product_name, p.category, p.list_price, p.cost,
-  COUNT(o.order_id)                                                  AS num_order_lines,
-  COALESCE(SUM(o.quantity), 0)                                       AS total_units_sold,
-  COUNT(DISTINCT o.customer_id)                                      AS unique_customers,
-  ROUND(SUM(o.quantity * o.unit_price * (1 - o.discount_pct/100)), 2) AS total_revenue,
-  ROUND(SUM(o.quantity * o.unit_price * (1 - o.discount_pct/100) - o.quantity * p.cost), 2) AS total_profit,
-  ROUND(AVG(o.discount_pct), 2)                                      AS avg_discount_pct,
-  ROUND(100 * SUM(o.quantity * o.unit_price * (1 - o.discount_pct/100) - o.quantity * p.cost)
-        / NULLIF(SUM(o.quantity * o.unit_price * (1 - o.discount_pct/100)), 0), 2) AS profit_margin_pct
-FROM {CATALOG}.{SCHEMA}.products p
-LEFT JOIN {CATALOG}.{SCHEMA}.orders o ON p.product_id = o.product_id
-GROUP BY p.product_id, p.product_name, p.category, p.list_price, p.cost
-""")
-
-spark.sql(f"""
-CREATE OR REPLACE TABLE {CATALOG}.{SCHEMA}.monthly_sales_summary
-COMMENT 'Monthly sales trend by region and segment (clean, pre-aggregated for Genie)' AS
-SELECT
-  DATE_TRUNC('MONTH', o.order_date) AS month, c.region, c.segment,
-  COUNT(o.order_id)             AS num_order_lines,
-  COUNT(DISTINCT o.customer_id) AS active_customers,
-  SUM(o.quantity)               AS total_units,
-  ROUND(SUM(o.quantity * o.unit_price * (1 - o.discount_pct/100)), 2)                       AS total_revenue,
-  ROUND(SUM(o.quantity * o.unit_price * (1 - o.discount_pct/100) - o.quantity * p.cost), 2) AS total_profit
-FROM {CATALOG}.{SCHEMA}.orders o
-JOIN {CATALOG}.{SCHEMA}.customers c ON o.customer_id = c.customer_id
-JOIN {CATALOG}.{SCHEMA}.products  p ON o.product_id  = p.product_id
-GROUP BY DATE_TRUNC('MONTH', o.order_date), c.region, c.segment
-""")
-print("✅ product_performance_summary, monthly_sales_summary built")
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ## 7. Build the heavy-OLAP `gold_customer_scorecard`
+# MAGIC ## 6. Build the heavy-OLAP `gold_customer_scorecard`
 # MAGIC
 # MAGIC Pre-computed per-customer analytics keyed by `customer_id` for **point lookup** - the
 # MAGIC kind of thing you would never run live against an OLTP store. Rolling-12-month
@@ -370,13 +328,13 @@ print("✅ gold_customer_scorecard built")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 7b. Build the governed `sales_metrics` metric view
+# MAGIC ## 6b. Build the governed `sales_metrics` metric view
 # MAGIC
 # MAGIC A Unity Catalog **metric view** (DBR 17.2+) defining standardised KPIs in YAML over
 # MAGIC the clean `orders` fact, joined to `customers` and `products`. It gives Genie and
 # MAGIC dashboards one governed source of truth for revenue/profit/margin so every tool agrees.
-# MAGIC Queried with `MEASURE(...)`. The `Active Customers (90d)` measure is relative to
-# MAGIC `current_date()`; the dataset's reference "today" is its latest order date.
+# MAGIC Queried with `MEASURE(...)`. Many measures over many dimensions, so any measure can be
+# MAGIC sliced by any dimension with one governed definition shared by Genie, dashboards and SQL.
 
 # COMMAND ----------
 
@@ -420,8 +378,8 @@ measures:
     expr: SUM(quantity)
   - name: Avg Order Value
     expr: SUM(quantity * unit_price * (1 - discount_pct/100)) / COUNT(order_id)
-  - name: Active Customers (90d)
-    expr: COUNT(DISTINCT customer_id) FILTER (WHERE order_date >= current_date() - INTERVAL 90 DAYS)
+  - name: Distinct Customers
+    expr: COUNT(DISTINCT customer_id)
 $$
 """)
 print("✅ sales_metrics metric view built")
@@ -429,7 +387,7 @@ print("✅ sales_metrics metric view built")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 8. Per-user schemas + participant grants
+# MAGIC ## 7. Per-user schemas + participant grants
 # MAGIC
 # MAGIC Each participant gets their own schema (for the SDP lab, where they create their own
 # MAGIC tables) and is granted read access to the shared data via the participant group.
@@ -478,7 +436,7 @@ except Exception as e:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 8b. Provision the Lakebase project for Practical 3
+# MAGIC ## 7b. Provision the Lakebase project for Practical 3
 # MAGIC
 # MAGIC Lakebase is a core practical of this workshop, so it is **provisioned by default**
 # MAGIC (`provision_lakebase = true`); set `provision_lakebase = false` to skip the Lakebase lab.
@@ -501,7 +459,7 @@ except Exception as e:
 # MAGIC      *creation* ("not authorized ... assign 'Can Manage'").
 # MAGIC    - UC: the participant reads the source gold table and writes the synced-table object
 # MAGIC      into their own scratch schema. `USE CATALOG` + `USE SCHEMA`/`SELECT` on
-# MAGIC      `shared_data` are already granted in section 8; `CREATE TABLE` on each `ws_<user>`
+# MAGIC      `shared_data` are already granted in section 7; `CREATE TABLE` on each `ws_<user>`
 # MAGIC      schema is already granted there too. So no extra UC grant is needed here.
 # MAGIC
 # MAGIC Group grants need an **account-level** `workshop_participants` group; the block is
@@ -560,7 +518,7 @@ else:
         # 3) Grant the participant group the permission set needed to branch + sync.
         #    Check the group exists FIRST: the permissions API does NOT validate the principal,
         #    so a CAN_MANAGE grant to a non-existent group "succeeds" and stores a dangling ACL
-        #    entry, falsely reporting that participants can branch. (The UC GRANTs in section 8
+        #    entry, falsely reporting that participants can branch. (The UC GRANTs in section 7
         #    error on a missing group; this API does not, so we check explicitly here.)
         try:
             _grp_exists = bool(list(w.groups.list(filter=f'displayName eq "{PARTICIPANTS_GROUP}"')))
@@ -606,7 +564,7 @@ else:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 9. Verify
+# MAGIC ## 8. Verify
 
 # COMMAND ----------
 
@@ -623,8 +581,6 @@ display(spark.sql(f"""
 SELECT 'customers' AS table, COUNT(*) AS rows FROM {CATALOG}.{SCHEMA}.customers
 UNION ALL SELECT 'products', COUNT(*) FROM {CATALOG}.{SCHEMA}.products
 UNION ALL SELECT 'orders', COUNT(*) FROM {CATALOG}.{SCHEMA}.orders
-UNION ALL SELECT 'product_performance_summary', COUNT(*) FROM {CATALOG}.{SCHEMA}.product_performance_summary
-UNION ALL SELECT 'monthly_sales_summary', COUNT(*) FROM {CATALOG}.{SCHEMA}.monthly_sales_summary
 UNION ALL SELECT 'gold_customer_scorecard', COUNT(*) FROM {CATALOG}.{SCHEMA}.gold_customer_scorecard
 ORDER BY table
 """))

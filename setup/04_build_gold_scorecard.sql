@@ -2,7 +2,7 @@
 -- MAGIC %md
 -- MAGIC # Step 4 - Build the heavy-OLAP gold_customer_scorecard
 -- MAGIC
--- MAGIC Transparency copy of section 7 of `00_bootstrap`. Pre-computed per-customer analytics
+-- MAGIC Transparency copy of section 6 of `00_bootstrap`. Pre-computed per-customer analytics
 -- MAGIC keyed by `customer_id` for point lookup - rolling-12-month revenue/profit/margin, RFM
 -- MAGIC scores, an at-risk score/flag, peer percentile ranks, top categories, and a
 -- MAGIC next-best-SKU cross-sell recommendation. This is the table the Lakebase practical syncs

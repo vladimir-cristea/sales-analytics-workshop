@@ -13,20 +13,19 @@ into the UC volume by the notebook itself, so there is no manual upload.
 3. Create the `shared_data` schema and `data` volume.
 4. Copy the committed `data/raw` and `data/clean` JSON into the volume.
 5. Build the clean tables (`customers`, `products`, `orders`) from `clean/` JSON.
-6. Build the summary tables (`product_performance_summary`, `monthly_sales_summary`).
-7. Build `gold_customer_scorecard`, the heavy-OLAP point-lookup table keyed by `customer_id`.
-8. Build the governed `sales_metrics` metric view (queried with `MEASURE(...)`).
-9. Create one `ws_<user>` scratch schema per participant and grant the group read access.
-9b. Provision Lakebase for Practical 3 (provisioned by default; set `provision_lakebase=false`
+6. Build `gold_customer_scorecard`, the heavy-OLAP point-lookup table keyed by `customer_id`.
+6b. Build the governed `sales_metrics` metric view (queried with `MEASURE(...)`).
+7. Create one `ws_<user>` scratch schema per participant and grant the group read access.
+7b. Provision Lakebase for Practical 3 (provisioned by default; set `provision_lakebase=false`
    to skip): get-or-create the Lakebase Autoscaling project, confirm its default
    `databricks_postgres` database, and grant the `workshop_participants` group the
    branch-and-sync permission set (group Postgres role + `CAN_MANAGE` on the project). It does
    **not** sync any table - participants do that themselves. Idempotent, and degrades
    gracefully: if Lakebase is not enabled on this workspace (or you cannot create projects),
    the step prints one warning and the bootstrap carries on to Verify.
-10. Verify: print volume files and row counts.
+8. Verify: print volume files and row counts.
 
-Group grants (both the section-8 UC grants and the section-9b Lakebase grants) are skipped
+Group grants (both the section-7 UC grants and the section-7b Lakebase grants) are skipped
 gracefully when the `workshop_participants` group does not exist; create it and re-run.
 
 ## Files

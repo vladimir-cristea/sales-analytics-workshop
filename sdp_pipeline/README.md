@@ -11,6 +11,5 @@ help you write it:
 There is **no starter file and no worked solution here on purpose** - the whole point is to
 build it yourself by describing what you want to Genie Code.
 
-The exercise instructions live in the facilitator's slide deck. Lean on the data dictionary
-in [`../data/README.md`](../data/README.md) for the schema and the exact data-quality rules
-your silver layer should enforce.
+See [`../data/README.md`](../data/README.md) for the data dictionary (schema, field meanings)
+and the raw volume paths.

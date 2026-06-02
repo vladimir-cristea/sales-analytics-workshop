@@ -81,22 +81,8 @@ data/clean/orders/orders.json            data/raw/orders/orders.json
 > The dataset's reference "today" (the anchor for recency and rolling-window metrics) is
 > **2026-05-31**.
 
-## Seeded data-quality issues (raw only)
+## Data quality
 
-The `clean/` files contain none of the below. The `raw/` files are the clean rows plus these
-deliberately seeded issues, which the SDP topic's silver layer is expected to drop or
-quarantine.
-
-| Entity    | Seeded issues |
-|-----------|---------------|
-| customers | Invalid `region` values; `segment = 'TEST'`; test-named outlets (`customer_name ILIKE '%test%'`); null `customer_id`. |
-| products  | Null `product_id`; `list_price <= 0`. |
-| orders    | Duplicate `order_id`; null `customer_id` / `product_id`; `quantity <= 0`; `discount_pct` outside 0-100; future `order_date`. |
-
-### Suggested silver-layer expectations
-
-| Table     | Expectation |
-|-----------|-------------|
-| customers | `customer_id IS NOT NULL`; `region IN (<valid set>)`; `segment <> 'TEST'`; `customer_name NOT ILIKE '%test%'`. |
-| products  | `product_id IS NOT NULL`; `list_price > 0`. |
-| orders    | `order_id IS NOT NULL`; `customer_id IS NOT NULL`; `product_id IS NOT NULL`; `quantity > 0`; `discount_pct BETWEEN 0 AND 100`; `order_date <= current_date()`; de-duplicate on `order_id`. |
+The `clean/` files are clean. The `raw/` files are the same rows with deliberate quality
+issues seeded in, for the SDP practical's silver layer to find and handle. Inspecting the raw
+data and working out what to do about it is part of that exercise.

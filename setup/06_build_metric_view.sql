@@ -2,7 +2,7 @@
 -- MAGIC %md
 -- MAGIC # Step 6 - Build the governed `sales_metrics` metric view
 -- MAGIC
--- MAGIC Transparency copy of section 7b of `00_bootstrap`. A Unity Catalog **metric view**
+-- MAGIC Transparency copy of section 6b of `00_bootstrap`. A Unity Catalog **metric view**
 -- MAGIC (DBR 17.2+) that defines standardised sales KPIs in YAML over the clean `orders` fact,
 -- MAGIC joined to `customers` and `products` - one governed source of truth shared by Genie,
 -- MAGIC dashboards and SQL. Query it with `MEASURE(...)` (a plain `SELECT *` is not supported).
@@ -49,8 +49,8 @@ measures:
     expr: SUM(quantity)
   - name: Avg Order Value
     expr: SUM(quantity * unit_price * (1 - discount_pct/100)) / COUNT(order_id)
-  - name: Active Customers (90d)
-    expr: COUNT(DISTINCT customer_id) FILTER (WHERE order_date >= current_date() - INTERVAL 90 DAYS)
+  - name: Distinct Customers
+    expr: COUNT(DISTINCT customer_id)
 $$;
 
 -- COMMAND ----------
